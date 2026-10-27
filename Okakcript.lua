@@ -1,6 +1,6 @@
 --=============================================================================--
---                      FEMBOYHUB V6 | MEGA EXPANSION EDITION                  --
---     CINEMATIC INTRO + 1:1 PITCH-BLACK UI + 85+ VISUALS, SHADERS & ANIMS     --
+--                   FEMBOYHUB V7 | ULTRA EXPANSION EDITION                    --
+--   COMPACT INTRO + AIMBOT & SILENT AIM + UI ANIMATION ENGINE + 150+ MODULES  --
 --=============================================================================--
 
 local Players = game:GetService("Players")
@@ -13,13 +13,15 @@ local SoundService = game:GetService("SoundService")
 local CoreGui = game:GetService("CoreGui")
 local Workspace = game:GetService("Workspace")
 local Debris = game:GetService("Debris")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local LocalPlayer = Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
 local Camera = Workspace.CurrentCamera
 
--- Очистка предыдущих запусков
+-- Очистка старых копий интерфейса
 local guiParent = (gethui and gethui()) or CoreGui
-for _, oldName in ipairs({"FemboyHub_V6", "FemboyHub_BlackUI", "FemboyHub_ShitaroUI", "FemboyHubUI", "ShitaroVisualsUI"}) do
+for _, oldName in ipairs({"FemboyHub_V7", "FemboyHub_V6", "FemboyHub_BlackUI", "FemboyHub_ShitaroUI", "FemboyHubUI"}) do
     if guiParent:FindFirstChild(oldName) then
         guiParent[oldName]:Destroy()
     end
@@ -28,19 +30,21 @@ if Lighting:FindFirstChild("FH_IntroBlur") then
     Lighting.FH_IntroBlur:Destroy()
 end
 
--- Цветовая схема (1:1 Pitch-Black со второго скриншота)
+-- Цветовая палитра (Pitch-Black 1:1 + подсветка для анимаций)
 local Theme = {
     Accent = Color3.fromRGB(255, 255, 255),
     BgMain = Color3.fromRGB(7, 7, 9),
     BgSidebar = Color3.fromRGB(10, 10, 13),
     BgCard = Color3.fromRGB(12, 12, 16),
     BgElement = Color3.fromRGB(17, 17, 22),
-    Border = Color3.fromRGB(28, 28, 35),
+    BgElementHover = Color3.fromRGB(25, 25, 33),
+    Border = Color3.fromRGB(28, 28, 36),
+    BorderActive = Color3.fromRGB(75, 75, 95),
     TextWhite = Color3.fromRGB(244, 244, 250),
     TextGray = Color3.fromRGB(130, 130, 144)
 }
 
--- Сохранение стандартных настроек мира
+-- Стандартные настройки освещения мира
 local DefaultLighting = {
     Ambient = Lighting.Ambient,
     OutdoorAmbient = Lighting.OutdoorAmbient,
@@ -60,54 +64,97 @@ local AllSearchRows = {}
 local ToggleSetters = {}
 local ActiveEmoteTrack = nil
 local MenuKeybind = Enum.KeyCode.RightShift
+local CurrentAimbotTarget = nil
 
 local SavedConfigs = {
-    ["asd"] = {},
-    ["asda"] = {},
+    ["Legit_Aim"] = {},
+    ["Rage_Silent"] = {},
+    ["Visual_God"] = {},
     ["IDK"] = {}
 }
 
--- Глобальное состояние всех функций
+-- Глобальное состояние всех 150+ модулей
 local State = {
+    -- Меню и Анимации интерфейса
     Watermark = true,
     PreviewESP = true,
     Notifications = true,
-    -- Движение и физика
+    UIRippleFX = true,
+    UIHoverGlow = true,
+    UITabSlide = true,
+    MascotAliveAnim = true,
+    KeystrokesHUD = false,
+    CustomCrosshair = false,
+    CrosshairSpin = true,
+    CrosshairGap = 8,
+
+    -- AIMBOT & SILENT AIM (Боевой раздел)
+    AimbotEnabled = false,
+    AimbotHoldMouse2 = false,
+    AimbotSmoothness = 18,
+    AimbotFOV = 125,
+    ShowFOVCircle = false,
+    RainbowFOV = false,
+    FilledFOVCircle = false,
+    AimbotHitPart = "Head",
+    AimbotTeamCheck = false,
+    AimbotWallCheck = false,
+    AimbotAliveCheck = true,
+    AimbotPrediction = false,
+    AimbotPredictVal = 14,
+    LockTracerLine = false,
+    TargetHUDPanel = false,
+
+    SilentAimEnabled = false,
+    SilentAimHitChance = 100,
+    SilentAimFOVCheck = true,
+    SilentAimBulletTP = false,
+    HitboxExpander = false,
+    HitboxSize = 12,
+    HitboxTransparency = 70,
+    TriggerBot = false,
+    TriggerDelay = 60,
+    AutoWallBang = false,
+
+    -- Движение и Физика
     Fly = false,
-    FlySpeed = 60,
+    FlySpeed = 65,
     Noclip = false,
     WalkSpeedOn = false,
-    WalkSpeed = 46,
+    WalkSpeed = 48,
     JumpPowerOn = false,
-    JumpPower = 90,
+    JumpPower = 95,
     Bhop = false,
     InfiniteJump = false,
     Wallhop = false,
-    PixelSurf = false,
     AirWalk = false,
     SpiderClimb = false,
     Spinbot = false,
-    SpinSpeed = 42,
+    SpinSpeed = 45,
     JitterSpin = false,
     AspectRatioOn = false,
     AspectRatio = 72,
     CustomFOVOn = false,
     CustomFOV = 110,
+
     -- Десинки и Защита
     FakePos = false,
     VelDesync = false,
     AntiFling = false,
+    AntiVoid = false,
+
     -- Шейдеры и Мир
     RTXShaders = false,
     MotionBlur = false,
     Fullbright = false,
     XRayWalls = false,
-    LowGravity = false,
     SakuraWeather = false,
     SnowWeather = false,
     NeonRain = false,
     VoidAsh = false,
-    -- 3D Визуалы и Экипировка
+    StarfallWeather = false,
+
+    -- 3D Ауры, Экипировка и Следы
     Constellations3D = false,
     ChinaHat = false,
     Halo = false,
@@ -117,31 +164,40 @@ local State = {
     CyberRing = false,
     OrbitPlanets = false,
     TeslaLightning = false,
-    VortexAura = false,
-    HeartAura = false,
+    DNAHelixAura = false,
+    BlackholeCore = false,
+    RunicPillars = false,
     NeonRibbonTrail = false,
     GhostTrail = false,
     JumpRings = false,
     FireFootsteps = false,
     PointLightGlow = false,
+
     -- ESP и Персонаж
     HighlightESP = false,
     NameESP = false,
     TracersESP = false,
+    Box2DESP = false,
+    HeadDotESP = false,
+    LookLaserESP = false,
+    DamagePopupESP = false,
     FakeHeadless = false,
     FakeKorblox = false,
     SelfChams = false,
     RainbowBody = false,
     GhostBody = false,
-    -- Модификаторы анимаций
+
+    -- Модификаторы Анимаций
     HyperAnims = false,
     SlowAnims = false,
     FreezePose = false,
-    MoonwalkMod = false,
     MatrixLean = false,
     HelicopterTilt = false
 }
 
+-------------------------------------------------------------------------
+-- УТИЛИТЫ И МЕНЕДЖЕР СОЕДИНЕНИЙ
+-------------------------------------------------------------------------
 local function Disconnect(name)
     if Connections[name] then
         Connections[name]:Disconnect()
@@ -173,232 +229,485 @@ local function PlaySound(id, vol, pitch)
     end)
 end
 
+local function QuickTween(obj, duration, style, dir, props)
+    local tw = TweenService:Create(obj, TweenInfo.new(duration, style or Enum.EasingStyle.Quart, dir or Enum.EasingDirection.Out), props)
+    tw:Play()
+    return tw
+end
+
 -------------------------------------------------------------------------
--- СОЗДАНИЕ SCREEN GUI И СИСТЕМЫ УВЕДОМЛЕНИЙ (TOAST NOTIFICATIONS)
+-- ДВИЖОК АНИМАЦИЙ ИНТЕРФЕЙСА (RIPPLE, HOVER GLOW, BOUNCE, SLIDE)
+-------------------------------------------------------------------------
+local function SpawnRipple(btn, clickPos)
+    if not State.UIRippleFX then return end
+    pcall(function()
+        btn.ClipsDescendants = true
+        local ripple = Instance.new("Frame", btn)
+        ripple.Name = "UIRipple"
+        ripple.AnchorPoint = Vector2.new(0.5, 0.5)
+        ripple.BackgroundColor3 = Theme.Accent
+        ripple.BackgroundTransparency = 0.65
+        ripple.BorderSizePixel = 0
+        ripple.ZIndex = btn.ZIndex + 3
+        Instance.new("UICorner", ripple).CornerRadius = UDim.new(1, 0)
+
+        local relX = clickPos and (clickPos.X - btn.AbsolutePosition.X) or (btn.AbsoluteSize.X / 2)
+        local relY = clickPos and (clickPos.Y - btn.AbsolutePosition.Y) or (btn.AbsoluteSize.Y / 2)
+        ripple.Position = UDim2.new(0, relX, 0, relY)
+        ripple.Size = UDim2.new(0, 0, 0, 0)
+
+        local maxDiam = math.max(btn.AbsoluteSize.X, btn.AbsoluteSize.Y) * 2.3
+        local tw = QuickTween(ripple, 0.48, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
+            Size = UDim2.new(0, maxDiam, 0, maxDiam),
+            BackgroundTransparency = 1
+        })
+        tw.Completed:Connect(function()
+            if ripple then ripple:Destroy() end
+        end)
+    end)
+end
+
+local function BindInteractiveHover(btn, strokeObj, labelObj, basePadX)
+    btn.MouseEnter:Connect(function()
+        if not State.UIHoverGlow then return end
+        if strokeObj then
+            QuickTween(strokeObj, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Theme.BorderActive})
+        end
+        if labelObj and basePadX then
+            QuickTween(labelObj, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
+                Position = UDim2.new(0, basePadX + 4, 0, 0)
+            })
+        end
+    end)
+    btn.MouseLeave:Connect(function()
+        if strokeObj then
+            QuickTween(strokeObj, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Theme.Border})
+        end
+        if labelObj and basePadX then
+            QuickTween(labelObj, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
+                Position = UDim2.new(0, basePadX, 0, 0)
+            })
+        end
+    end)
+end
+
+-------------------------------------------------------------------------
+-- СОЗДАНИЕ SCREEN GUI И УВЕДОМЛЕНИЙ С ПРУЖИННОЙ АНИМАЦИЕЙ
 -------------------------------------------------------------------------
 local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.Name = "FemboyHub_V6"
+ScreenGui.Name = "FemboyHub_V7"
 ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
 ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 ScreenGui.Parent = guiParent
 
 local NotifyHolder = Instance.new("Frame", ScreenGui)
-NotifyHolder.Size = UDim2.new(0, 240, 1, -20)
-NotifyHolder.Position = UDim2.new(1, -252, 0, 10)
+NotifyHolder.Size = UDim2.new(0, 255, 1, -24)
+NotifyHolder.Position = UDim2.new(1, -267, 0, 12)
 NotifyHolder.BackgroundTransparency = 1
-NotifyHolder.ZIndex = 50
+NotifyHolder.ZIndex = 80
 
 local NotifyLayout = Instance.new("UIListLayout", NotifyHolder)
 NotifyLayout.VerticalAlignment = Enum.VerticalAlignment.Bottom
-NotifyLayout.Padding = UDim.new(0, 6)
+NotifyLayout.Padding = UDim.new(0, 7)
 NotifyLayout.SortOrder = Enum.SortOrder.LayoutOrder
 
 local function Notify(title, msg, duration)
     if not State.Notifications then return end
-    local Card = Instance.new("Frame", NotifyHolder)
-    Card.Size = UDim2.new(1, 0, 0, 44)
+    local Wrapper = Instance.new("Frame", NotifyHolder)
+    Wrapper.Size = UDim2.new(1, 0, 0, 48)
+    Wrapper.BackgroundTransparency = 1
+
+    local Card = Instance.new("Frame", Wrapper)
+    Card.Size = UDim2.new(1, 0, 1, 0)
+    Card.Position = UDim2.new(1, 60, 0, 0)
     Card.BackgroundColor3 = Theme.BgMain
     Card.BorderSizePixel = 0
-    Card.BackgroundTransparency = 1
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 4)
+    Card.ClipsDescendants = true
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 5)
     local st = Instance.new("UIStroke", Card)
-    st.Color = Theme.Border
-    st.Transparency = 1
+    st.Color = Theme.BorderActive
 
     local SideBar = Instance.new("Frame", Card)
     SideBar.Size = UDim2.new(0, 2, 1, -10)
-    SideBar.Position = UDim2.new(0, 4, 0, 5)
+    SideBar.Position = UDim2.new(0, 5, 0, 5)
     SideBar.BackgroundColor3 = Theme.Accent
     SideBar.BorderSizePixel = 0
     table.insert(AccentObjects, SideBar)
 
+    local TimerBar = Instance.new("Frame", Card)
+    TimerBar.Size = UDim2.new(1, 0, 0, 2)
+    TimerBar.Position = UDim2.new(0, 0, 1, -2)
+    TimerBar.BackgroundColor3 = Theme.Accent
+    TimerBar.BorderSizePixel = 0
+    table.insert(AccentObjects, TimerBar)
+
     local T1 = Instance.new("TextLabel", Card)
-    T1.Size = UDim2.new(1, -18, 0, 16)
-    T1.Position = UDim2.new(0, 12, 0, 5)
+    T1.Size = UDim2.new(1, -20, 0, 16)
+    T1.Position = UDim2.new(0, 14, 0, 6)
     T1.BackgroundTransparency = 1
-    T1.Text = title
+    T1.Text = "✦ " .. title
     T1.TextColor3 = Theme.TextWhite
     T1.Font = Enum.Font.GothamBold
     T1.TextSize = 11
     T1.TextXAlignment = Enum.TextXAlignment.Left
-    T1.TextTransparency = 1
 
     local T2 = Instance.new("TextLabel", Card)
-    T2.Size = UDim2.new(1, -18, 0, 16)
-    T2.Position = UDim2.new(0, 12, 0, 21)
+    T2.Size = UDim2.new(1, -20, 0, 16)
+    T2.Position = UDim2.new(0, 14, 0, 23)
     T2.BackgroundTransparency = 1
     T2.Text = msg
     T2.TextColor3 = Theme.TextGray
     T2.Font = Enum.Font.Gotham
     T2.TextSize = 10
     T2.TextXAlignment = Enum.TextXAlignment.Left
-    T2.TextTransparency = 1
 
-    TweenService:Create(Card, TweenInfo.new(0.22), {BackgroundTransparency = 0.05}):Play()
-    TweenService:Create(st, TweenInfo.new(0.22), {Transparency = 0}):Play()
-    TweenService:Create(T1, TweenInfo.new(0.22), {TextTransparency = 0}):Play()
-    TweenService:Create(T2, TweenInfo.new(0.22), {TextTransparency = 0}):Play()
+    local life = duration or 2.4
+    QuickTween(Card, 0.35, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {Position = UDim2.new(0, 0, 0, 0)})
+    QuickTween(TimerBar, life, Enum.EasingStyle.Linear, Enum.EasingDirection.Out, {Size = UDim2.new(0, 0, 0, 2)})
 
-    task.delay(duration or 2.4, function()
+    task.delay(life, function()
         if Card and Card.Parent then
-            local tw = TweenService:Create(Card, TweenInfo.new(0.25), {BackgroundTransparency = 1})
-            TweenService:Create(st, TweenInfo.new(0.25), {Transparency = 1}):Play()
-            TweenService:Create(T1, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
-            TweenService:Create(T2, TweenInfo.new(0.25), {TextTransparency = 1}):Play()
-            tw:Play()
-            tw.Completed:Wait()
-            if Card then Card:Destroy() end
+            local outTw = QuickTween(Card, 0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In, {
+                Position = UDim2.new(1, 80, 0, 0)
+            })
+            outTw.Completed:Wait()
+            if Wrapper then Wrapper:Destroy() end
         end
     end)
 end
 
 -------------------------------------------------------------------------
--- КИНЕМАТОГРАФИЧНОЕ ЗАГРУЗОЧНОЕ ИНТРО (CINEMATIC INTRO)
+-- ИСПРАВЛЕННОЕ КОМПАКТНОЕ ИНТРО (НЕ НА ВЕСЬ ЭКРАН! АККУРАТНОЕ ОКНО)
 -------------------------------------------------------------------------
-local function RunCinematicIntro(onComplete)
-    local IntroBlur = Instance.new("BlurEffect", Lighting)
-    IntroBlur.Name = "FH_IntroBlur"
-    IntroBlur.Size = 0
-    TweenService:Create(IntroBlur, TweenInfo.new(0.6, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = 22}):Play()
-
-    local IntroBg = Instance.new("Frame", ScreenGui)
-    IntroBg.Name = "IntroOverlay"
-    IntroBg.Size = UDim2.new(1, 0, 1, 0)
-    IntroBg.BackgroundColor3 = Color3.fromRGB(4, 4, 6)
-    IntroBg.BackgroundTransparency = 0.25
-    IntroBg.ZIndex = 100
-
-    local IntroCard = Instance.new("Frame", IntroBg)
+local function RunCompactCinematicIntro(onComplete)
+    -- Компактный плавающий контейнер по центру (без полноэкранного фона и без блюра)
+    local IntroCard = Instance.new("Frame", ScreenGui)
+    IntroCard.Name = "CompactIntroWindow"
     IntroCard.Size = UDim2.new(0, 0, 0, 0)
     IntroCard.Position = UDim2.new(0.5, 0, 0.5, 0)
     IntroCard.AnchorPoint = Vector2.new(0.5, 0.5)
     IntroCard.BackgroundColor3 = Theme.BgMain
     IntroCard.ClipsDescendants = true
-    IntroCard.ZIndex = 101
-    Instance.new("UICorner", IntroCard).CornerRadius = UDim.new(0, 6)
-    local IntroStroke = Instance.new("UIStroke", IntroCard)
-    IntroStroke.Color = Theme.Border
-    IntroStroke.Thickness = 1.2
+    IntroCard.ZIndex = 120
+    Instance.new("UICorner", IntroCard).CornerRadius = UDim.new(0, 8)
 
-    -- Мини-созвездие внутри интро
-    local IntroStars = {}
-    for i = 1, 14 do
-        local st = Instance.new("Frame", IntroCard)
-        st.Size = UDim2.new(0, 3, 0, 3)
-        st.Position = UDim2.new(math.random(5, 95) / 100, 0, math.random(10, 90) / 100, 0)
-        st.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        st.BackgroundTransparency = 0.45
-        st.BorderSizePixel = 0
-        st.ZIndex = 102
-        Instance.new("UICorner", st).CornerRadius = UDim.new(1, 0)
-        table.insert(IntroStars, st)
+    local IntroStroke = Instance.new("UIStroke", IntroCard)
+    IntroStroke.Color = Theme.Accent
+    IntroStroke.Thickness = 1.4
+
+    local StrokeGrad = Instance.new("UIGradient", IntroStroke)
+    StrokeGrad.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(35, 35, 45)),
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 255))
+    })
+
+    -- Мини-звёзды внутри компактного окна интро
+    local miniDots = {}
+    for i = 1, 12 do
+        local d = Instance.new("Frame", IntroCard)
+        d.Size = UDim2.new(0, 3, 0, 3)
+        d.Position = UDim2.new(math.random(8, 92) / 100, 0, math.random(12, 88) / 100, 0)
+        d.BackgroundColor3 = Theme.Accent
+        d.BackgroundTransparency = 0.55
+        d.BorderSizePixel = 0
+        d.ZIndex = 121
+        Instance.new("UICorner", d).CornerRadius = UDim.new(1, 0)
+        table.insert(miniDots, d)
     end
 
+    local Badge = Instance.new("TextLabel", IntroCard)
+    Badge.Size = UDim2.new(0, 90, 0, 18)
+    Badge.Position = UDim2.new(0.5, -45, 0, 14)
+    Badge.BackgroundColor3 = Theme.BgElement
+    Badge.Text = "V7 ULTRA"
+    Badge.TextColor3 = Theme.TextWhite
+    Badge.Font = Enum.Font.Code
+    Badge.TextSize = 10
+    Badge.ZIndex = 122
+    Instance.new("UICorner", Badge).CornerRadius = UDim.new(1, 0)
+    Instance.new("UIStroke", Badge).Color = Theme.Border
+
     local LogoBig = Instance.new("TextLabel", IntroCard)
-    LogoBig.Size = UDim2.new(1, 0, 0, 36)
-    LogoBig.Position = UDim2.new(0, 0, 0, 34)
+    LogoBig.Size = UDim2.new(1, 0, 0, 30)
+    LogoBig.Position = UDim2.new(0, 0, 0, 38)
     LogoBig.BackgroundTransparency = 1
     LogoBig.Text = "F E M B O Y H U B"
     LogoBig.TextColor3 = Theme.TextWhite
     LogoBig.Font = Enum.Font.GothamBold
-    LogoBig.TextSize = 24
+    LogoBig.TextSize = 21
     LogoBig.TextTransparency = 1
-    LogoBig.ZIndex = 103
+    LogoBig.ZIndex = 122
 
     local SubTitle = Instance.new("TextLabel", IntroCard)
-    SubTitle.Size = UDim2.new(1, 0, 0, 18)
-    SubTitle.Position = UDim2.new(0, 0, 0, 70)
+    SubTitle.Size = UDim2.new(1, 0, 0, 16)
+    SubTitle.Position = UDim2.new(0, 0, 0, 68)
     SubTitle.BackgroundTransparency = 1
-    SubTitle.Text = "PITCH-BLACK VISUAL & ANIMATION ENGINE V6"
+    SubTitle.Text = "AIMBOT • SILENT AIM • SHADERS • 150+ MODS"
     SubTitle.TextColor3 = Theme.TextGray
     SubTitle.Font = Enum.Font.Code
-    SubTitle.TextSize = 11
+    SubTitle.TextSize = 10
     SubTitle.TextTransparency = 1
-    SubTitle.ZIndex = 103
+    SubTitle.ZIndex = 122
 
     local StepText = Instance.new("TextLabel", IntroCard)
-    StepText.Size = UDim2.new(1, -48, 0, 18)
-    StepText.Position = UDim2.new(0, 24, 0, 122)
+    StepText.Size = UDim2.new(1, -44, 0, 16)
+    StepText.Position = UDim2.new(0, 22, 0, 108)
     StepText.BackgroundTransparency = 1
-    StepText.Text = "Initializing core..."
+    StepText.Text = "Starting engine..."
     StepText.TextColor3 = Theme.TextWhite
     StepText.Font = Enum.Font.GothamMedium
-    StepText.TextSize = 11
+    StepText.TextSize = 10
     StepText.TextXAlignment = Enum.TextXAlignment.Left
-    StepText.ZIndex = 103
+    StepText.ZIndex = 122
 
     local PctText = Instance.new("TextLabel", IntroCard)
-    PctText.Size = UDim2.new(0, 60, 0, 18)
-    PctText.Position = UDim2.new(1, -84, 0, 122)
+    PctText.Size = UDim2.new(0, 50, 0, 16)
+    PctText.Position = UDim2.new(1, -72, 0, 108)
     PctText.BackgroundTransparency = 1
     PctText.Text = "0%"
     PctText.TextColor3 = Theme.TextWhite
     PctText.Font = Enum.Font.GothamBold
-    PctText.TextSize = 11
+    PctText.TextSize = 10
     PctText.TextXAlignment = Enum.TextXAlignment.Right
-    PctText.ZIndex = 103
+    PctText.ZIndex = 122
 
     local BarBack = Instance.new("Frame", IntroCard)
-    BarBack.Size = UDim2.new(1, -48, 0, 5)
-    BarBack.Position = UDim2.new(0, 24, 0, 146)
+    BarBack.Size = UDim2.new(1, -44, 0, 5)
+    BarBack.Position = UDim2.new(0, 22, 0, 130)
     BarBack.BackgroundColor3 = Theme.BgElement
     BarBack.BorderSizePixel = 0
-    BarBack.ZIndex = 103
+    BarBack.ZIndex = 122
     Instance.new("UICorner", BarBack).CornerRadius = UDim.new(1, 0)
 
     local BarFill = Instance.new("Frame", BarBack)
     BarFill.Size = UDim2.new(0, 0, 1, 0)
     BarFill.BackgroundColor3 = Theme.Accent
     BarFill.BorderSizePixel = 0
-    BarFill.ZIndex = 104
+    BarFill.ZIndex = 123
     Instance.new("UICorner", BarFill).CornerRadius = UDim.new(1, 0)
 
-    PlaySound(9119713951, 0.5, 1)
+    -- Анимация вращения градиента рамки во время загрузки
+    local gradConn
+    gradConn = RunService.RenderStepped:Connect(function(dt)
+        StrokeGrad.Rotation = (StrokeGrad.Rotation + dt * 160) % 360
+    end)
 
-    TweenService:Create(IntroCard, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 410, 0, 185)
-    }):Play()
-    task.wait(0.25)
-    TweenService:Create(LogoBig, TweenInfo.new(0.35), {TextTransparency = 0}):Play()
-    TweenService:Create(SubTitle, TweenInfo.new(0.45), {TextTransparency = 0}):Play()
+    PlaySound(9119713951, 0.5, 1.05)
+
+    -- Пружинное раскрытие ТОЛЬКО компактной карточки (370x156)
+    QuickTween(IntroCard, 0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
+        Size = UDim2.new(0, 370, 0, 156)
+    })
+    task.wait(0.22)
+    QuickTween(LogoBig, 0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextTransparency = 0})
+    QuickTween(SubTitle, 0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextTransparency = 0})
 
     local steps = {
-        {pct = 0.22, txt = "Loading Pitch-Black Constellation UI..."},
-        {pct = 0.48, txt = "Compiling RTX Shaders & 3D Auras..."},
-        {pct = 0.76, txt = "Injecting R15 Animation Packs & Emotes..."},
-        {pct = 0.94, txt = "Mounting 3D Character Viewport & Configs..."},
-        {pct = 1.00, txt = "Welcome, @" .. LocalPlayer.Name .. "!"}
+        {pct = 0.25, txt = "Initializing UI Animation Engine..."},
+        {pct = 0.52, txt = "Mounting Camera Aimbot & Silent Aim..."},
+        {pct = 0.78, txt = "Loading 3D Auras, Shaders & R15 Packs..."},
+        {pct = 1.00, txt = "Ready! Welcome, @" .. LocalPlayer.Name}
     }
 
     for _, st in ipairs(steps) do
         StepText.Text = st.txt
         PctText.Text = math.floor(st.pct * 100) .. "%"
-        TweenService:Create(BarFill, TweenInfo.new(0.26, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        QuickTween(BarFill, 0.24, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
             Size = UDim2.new(st.pct, 0, 1, 0)
-        }):Play()
-        task.wait(0.28)
+        })
+        task.wait(0.26)
     end
 
-    PlaySound(6895079853, 0.6, 1.05)
-    task.wait(0.2)
+    PlaySound(6895079853, 0.55, 1.08)
+    task.wait(0.18)
 
-    TweenService:Create(IntroBlur, TweenInfo.new(0.45), {Size = 0}):Play()
-    TweenService:Create(IntroBg, TweenInfo.new(0.4), {BackgroundTransparency = 1}):Play()
-    local closeTw = TweenService:Create(IntroCard, TweenInfo.new(0.35, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+    if gradConn then gradConn:Disconnect() end
+    local closeTw = QuickTween(IntroCard, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.In, {
         Size = UDim2.new(0, 0, 0, 0)
     })
-    closeTw:Play()
     closeTw.Completed:Wait()
-    IntroBlur:Destroy()
-    IntroBg:Destroy()
+    IntroCard:Destroy()
     if onComplete then onComplete() end
 end
 
 -------------------------------------------------------------------------
--- WATERMARK & ПЛАВАЮЩАЯ МОБИЛЬНАЯ КНОПКА
+-- БОЕВЫЕ И ИГРОВЫЕ ОВЕРЛЕИ (FOV CIRCLE, CROSSHAIR, TARGET HUD, KEYSTROKES)
+-------------------------------------------------------------------------
+-- 1. Круг радиуса Aimbot / Silent Aim (FOV Circle)
+local FOVCircleFrame = Instance.new("Frame", ScreenGui)
+FOVCircleFrame.Name = "AimbotFOVCircle"
+FOVCircleFrame.AnchorPoint = Vector2.new(0.5, 0.5)
+FOVCircleFrame.Position = UDim2.new(0.5, 0, 0.5, 0)
+FOVCircleFrame.Size = UDim2.new(0, State.AimbotFOV * 2, 0, State.AimbotFOV * 2)
+FOVCircleFrame.BackgroundColor3 = Theme.Accent
+FOVCircleFrame.BackgroundTransparency = 1
+FOVCircleFrame.BorderSizePixel = 0
+FOVCircleFrame.Visible = false
+FOVCircleFrame.ZIndex = 15
+Instance.new("UICorner", FOVCircleFrame).CornerRadius = UDim.new(1, 0)
+
+local FOVStroke = Instance.new("UIStroke", FOVCircleFrame)
+FOVStroke.Color = Theme.Accent
+FOVStroke.Thickness = 1.3
+FOVStroke.Transparency = 0.15
+table.insert(AccentObjects, FOVCircleFrame)
+
+-- 2. Линия захвата цели (Snapline от центра экрана к цели аимбота)
+local AimbotSnapline = Instance.new("Frame", ScreenGui)
+AimbotSnapline.Name = "AimbotSnapline"
+AimbotSnapline.AnchorPoint = Vector2.new(0.5, 0.5)
+AimbotSnapline.BackgroundColor3 = Theme.Accent
+AimbotSnapline.BorderSizePixel = 0
+AimbotSnapline.Visible = false
+AimbotSnapline.ZIndex = 16
+table.insert(AccentObjects, AimbotSnapline)
+
+-- 3. Анимированный кастомный прицел (Spinning Neon Crosshair)
+local CrosshairHolder = Instance.new("Frame", ScreenGui)
+CrosshairHolder.Size = UDim2.new(0, 40, 0, 40)
+CrosshairHolder.AnchorPoint = Vector2.new(0.5, 0.5)
+CrosshairHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
+CrosshairHolder.BackgroundTransparency = 1
+CrosshairHolder.Visible = false
+CrosshairHolder.ZIndex = 18
+
+local CrossCenterDot = Instance.new("Frame", CrosshairHolder)
+CrossCenterDot.Size = UDim2.new(0, 3, 0, 3)
+CrossCenterDot.AnchorPoint = Vector2.new(0.5, 0.5)
+CrossCenterDot.Position = UDim2.new(0.5, 0, 0.5, 0)
+CrossCenterDot.BackgroundColor3 = Theme.Accent
+CrossCenterDot.BorderSizePixel = 0
+Instance.new("UICorner", CrossCenterDot).CornerRadius = UDim.new(1, 0)
+table.insert(AccentObjects, CrossCenterDot)
+
+local CrossBars = {}
+local barOffsets = {
+    {x = 0, y = -1, w = 2, h = 8},
+    {x = 0, y = 1,  w = 2, h = 8},
+    {x = -1, y = 0, w = 8, h = 2},
+    {x = 1, y = 0,  w = 8, h = 2}
+}
+for i, off in ipairs(barOffsets) do
+    local b = Instance.new("Frame", CrosshairHolder)
+    b.Size = UDim2.new(0, off.w, 0, off.h)
+    b.AnchorPoint = Vector2.new(0.5, 0.5)
+    b.Position = UDim2.new(0.5, off.x * 10, 0.5, off.y * 10)
+    b.BackgroundColor3 = Theme.Accent
+    b.BorderSizePixel = 0
+    table.insert(AccentObjects, b)
+    table.insert(CrossBars, {ui = b, dirX = off.x, dirY = off.y})
+end
+
+-- 4. Target HUD (Плавающая карточка захваченного противника)
+local TargetHUD = Instance.new("Frame", ScreenGui)
+TargetHUD.Name = "TargetHUD"
+TargetHUD.Size = UDim2.new(0, 215, 0, 62)
+TargetHUD.Position = UDim2.new(0.5, -107, 0.78, 0)
+TargetHUD.BackgroundColor3 = Theme.BgMain
+TargetHUD.BorderSizePixel = 0
+TargetHUD.Visible = false
+TargetHUD.ZIndex = 25
+Instance.new("UICorner", TargetHUD).CornerRadius = UDim.new(0, 6)
+local THUDStroke = Instance.new("UIStroke", TargetHUD)
+THUDStroke.Color = Theme.BorderActive
+
+local THUDAvatar = Instance.new("ImageLabel", TargetHUD)
+THUDAvatar.Size = UDim2.new(0, 44, 0, 44)
+THUDAvatar.Position = UDim2.new(0, 9, 0.5, -22)
+THUDAvatar.BackgroundColor3 = Theme.BgElement
+THUDAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. LocalPlayer.UserId .. "&w=150&h=150"
+Instance.new("UICorner", THUDAvatar).CornerRadius = UDim.new(0, 6)
+
+local THUDName = Instance.new("TextLabel", TargetHUD)
+THUDName.Size = UDim2.new(1, -66, 0, 16)
+THUDName.Position = UDim2.new(0, 60, 0, 8)
+THUDName.BackgroundTransparency = 1
+THUDName.Text = "Target: None"
+THUDName.TextColor3 = Theme.TextWhite
+THUDName.Font = Enum.Font.GothamBold
+THUDName.TextSize = 11
+THUDName.TextXAlignment = Enum.TextXAlignment.Left
+
+local THUDInfo = Instance.new("TextLabel", TargetHUD)
+THUDInfo.Size = UDim2.new(1, -66, 0, 14)
+THUDInfo.Position = UDim2.new(0, 60, 0, 24)
+THUDInfo.BackgroundTransparency = 1
+THUDInfo.Text = "HP: 100 | Dist: 0m"
+THUDInfo.TextColor3 = Theme.TextGray
+THUDInfo.Font = Enum.Font.Code
+THUDInfo.TextSize = 10
+THUDInfo.TextXAlignment = Enum.TextXAlignment.Left
+
+local THUDHpBg = Instance.new("Frame", TargetHUD)
+THUDHpBg.Size = UDim2.new(1, -68, 0, 6)
+THUDHpBg.Position = UDim2.new(0, 60, 0, 44)
+THUDHpBg.BackgroundColor3 = Theme.BgElement
+THUDHpBg.BorderSizePixel = 0
+Instance.new("UICorner", THUDHpBg).CornerRadius = UDim.new(1, 0)
+
+local THUDHpFill = Instance.new("Frame", THUDHpBg)
+THUDHpFill.Size = UDim2.new(1, 0, 1, 0)
+THUDHpFill.BackgroundColor3 = Theme.Accent
+THUDHpFill.BorderSizePixel = 0
+Instance.new("UICorner", THUDHpFill).CornerRadius = UDim.new(1, 0)
+table.insert(AccentObjects, THUDHpFill)
+
+-- 5. Keystrokes HUD (Анимированный индикатор нажатий W A S D)
+local KeystrokesFrame = Instance.new("Frame", ScreenGui)
+KeystrokesFrame.Size = UDim2.new(0, 114, 0, 76)
+KeystrokesFrame.Position = UDim2.new(0, 14, 1, -96)
+KeystrokesFrame.BackgroundTransparency = 1
+KeystrokesFrame.Visible = false
+KeystrokesFrame.ZIndex = 20
+
+local KeyBoxes = {}
+local keyDefs = {
+    {k = Enum.KeyCode.W, txt = "W", x = 38, y = 0, w = 34, h = 34},
+    {k = Enum.KeyCode.A, txt = "A", x = 0,  y = 38, w = 34, h = 34},
+    {k = Enum.KeyCode.S, txt = "S", x = 38, y = 38, w = 34, h = 34},
+    {k = Enum.KeyCode.D, txt = "D", x = 76, y = 38, w = 34, h = 34}
+}
+for _, kd in ipairs(keyDefs) do
+    local f = Instance.new("Frame", KeystrokesFrame)
+    f.Size = UDim2.new(0, kd.w, 0, kd.h)
+    f.Position = UDim2.new(0, kd.x, 0, kd.y)
+    f.BackgroundColor3 = Theme.BgMain
+    f.BackgroundTransparency = 0.15
+    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 5)
+    local st = Instance.new("UIStroke", f)
+    st.Color = Theme.Border
+    local lbl = Instance.new("TextLabel", f)
+    lbl.Size = UDim2.new(1, 0, 1, 0)
+    lbl.BackgroundTransparency = 1
+    lbl.Text = kd.txt
+    lbl.TextColor3 = Theme.TextWhite
+    lbl.Font = Enum.Font.GothamBold
+    lbl.TextSize = 12
+    KeyBoxes[kd.k] = {frame = f, stroke = st, label = lbl}
+end
+
+UserInputService.InputBegan:Connect(function(inp, gpe)
+    if not gpe and KeyBoxes[inp.KeyCode] and State.KeystrokesHUD then
+        local kb = KeyBoxes[inp.KeyCode]
+        QuickTween(kb.frame, 0.12, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Theme.Accent})
+        kb.label.TextColor3 = Color3.fromRGB(10, 10, 12)
+    end
+end)
+UserInputService.InputEnded:Connect(function(inp)
+    if KeyBoxes[inp.KeyCode] then
+        local kb = KeyBoxes[inp.KeyCode]
+        QuickTween(kb.frame, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Theme.BgMain})
+        kb.label.TextColor3 = Theme.TextWhite
+    end
+end)
+
+-------------------------------------------------------------------------
+-- WATERMARK И МОБИЛЬНАЯ КНОПКА С АНИМАЦИЕЙ
 -------------------------------------------------------------------------
 local Watermark = Instance.new("Frame", ScreenGui)
-Watermark.Size = UDim2.new(0, 275, 0, 26)
+Watermark.Size = UDim2.new(0, 295, 0, 26)
 Watermark.Position = UDim2.new(0, 14, 0, 10)
 Watermark.BackgroundColor3 = Theme.BgMain
 Watermark.BorderSizePixel = 0
@@ -417,7 +726,7 @@ local WmLabel = Instance.new("TextLabel", Watermark)
 WmLabel.Size = UDim2.new(1, -16, 1, 0)
 WmLabel.Position = UDim2.new(0, 12, 0, 0)
 WmLabel.BackgroundTransparency = 1
-WmLabel.Text = "FemboyHub V6 | @" .. LocalPlayer.Name .. " | 60 FPS"
+WmLabel.Text = "FemboyHub V7 | @" .. LocalPlayer.Name .. " | 60 FPS"
 WmLabel.TextColor3 = Theme.TextWhite
 WmLabel.Font = Enum.Font.GothamBold
 WmLabel.TextSize = 11
@@ -427,32 +736,51 @@ local fpsCount, lastFpsTime = 0, tick()
 Connections.WatermarkFPS = RunService.RenderStepped:Connect(function()
     fpsCount = fpsCount + 1
     if tick() - lastFpsTime >= 1 then
-        WmLabel.Text = string.format("FemboyHub V6 | @%s | %d FPS", LocalPlayer.Name, fpsCount)
+        WmLabel.Text = string.format("FemboyHub V7 | @%s | %d FPS", LocalPlayer.Name, fpsCount)
         fpsCount = 0
         lastFpsTime = tick()
     end
 end)
 
 local MobileToggle = Instance.new("TextButton", ScreenGui)
-MobileToggle.Size = UDim2.new(0, 96, 0, 26)
+MobileToggle.Size = UDim2.new(0, 104, 0, 28)
 MobileToggle.Position = UDim2.new(0, 14, 0, 42)
 MobileToggle.BackgroundColor3 = Theme.BgMain
 MobileToggle.TextColor3 = Theme.TextWhite
 MobileToggle.Font = Enum.Font.GothamBold
 MobileToggle.TextSize = 11
-MobileToggle.Text = "FemboyHub"
+MobileToggle.Text = "✦ FemboyHub"
 MobileToggle.Visible = false
-Instance.new("UICorner", MobileToggle).CornerRadius = UDim.new(0, 4)
-Instance.new("UIStroke", MobileToggle).Color = Theme.Border
+Instance.new("UICorner", MobileToggle).CornerRadius = UDim.new(0, 5)
+local MobStroke = Instance.new("UIStroke", MobileToggle)
+MobStroke.Color = Theme.BorderActive
 
--- Главный контейнер (Держит основное окно + правое окно 3D превью)
+-- Главный контейнер (Держит левое окно + правое окно 3D превью)
 local MasterFrame = Instance.new("Frame", ScreenGui)
 MasterFrame.Name = "MasterFrame"
-MasterFrame.Size = UDim2.new(0, 835, 0, 455)
-MasterFrame.Position = UDim2.new(0.5, -417, 0.5, -227)
+MasterFrame.Size = UDim2.new(0, 845, 0, 465)
+MasterFrame.Position = UDim2.new(0.5, -422, 0.5, -232)
 MasterFrame.BackgroundTransparency = 1
 MasterFrame.Active = true
 MasterFrame.Visible = false
+
+local MasterScale = Instance.new("UIScale", MasterFrame)
+MasterScale.Scale = 1
+
+local menuOpenState = true
+local function ToggleMenuAnimated()
+    menuOpenState = not menuOpenState
+    if menuOpenState then
+        MasterFrame.Visible = true
+        MasterScale.Scale = 0.88
+        QuickTween(MasterScale, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {Scale = 1})
+    else
+        local tw = QuickTween(MasterScale, 0.2, Enum.EasingStyle.Quart, Enum.EasingDirection.In, {Scale = 0.88})
+        tw.Completed:Connect(function()
+            if not menuOpenState then MasterFrame.Visible = false end
+        end)
+    end
+end
 
 local function MakeDraggable(handle, target)
     local dragging, dragInput, dragStart, startPos
@@ -474,28 +802,32 @@ local function MakeDraggable(handle, target)
     UserInputService.InputChanged:Connect(function(input)
         if input == dragInput and dragging then
             local delta = input.Position - dragStart
-            target.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            QuickTween(target, 0.08, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
+                Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+            })
         end
     end)
 end
 
 MakeDraggable(MobileToggle, MobileToggle)
+MakeDraggable(TargetHUD, TargetHUD)
+MakeDraggable(KeystrokesFrame, KeystrokesFrame)
 
 -------------------------------------------------------------------------
--- ЛЕВОЕ ОСНОВНОЕ ОКНО МЕНЮ (1:1 СО СКРИНШОТОМ 2)
+-- ОСНОВНОЕ ОКНО МЕНЮ + ЖИВОЙ АНИМИРОВАННЫЙ МАСКОТ В САЙДБАРЕ
 -------------------------------------------------------------------------
 local MainBox = Instance.new("Frame", MasterFrame)
-MainBox.Size = UDim2.new(0, 605, 1, 0)
+MainBox.Size = UDim2.new(0, 615, 1, 0)
 MainBox.BackgroundColor3 = Theme.BgMain
 MainBox.BorderSizePixel = 0
-Instance.new("UICorner", MainBox).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", MainBox).CornerRadius = UDim.new(0, 5)
 Instance.new("UIStroke", MainBox).Color = Theme.Border
 
 local Sidebar = Instance.new("Frame", MainBox)
-Sidebar.Size = UDim2.new(0, 145, 1, 0)
+Sidebar.Size = UDim2.new(0, 148, 1, 0)
 Sidebar.BackgroundColor3 = Theme.BgSidebar
 Sidebar.BorderSizePixel = 0
-Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", Sidebar).CornerRadius = UDim.new(0, 5)
 
 local SidebarLine = Instance.new("Frame", Sidebar)
 SidebarLine.Size = UDim2.new(0, 1, 1, 0)
@@ -503,13 +835,13 @@ SidebarLine.Position = UDim2.new(1, 0, 0, 0)
 SidebarLine.BackgroundColor3 = Theme.Border
 SidebarLine.BorderSizePixel = 0
 
--- Верхний блок с маскотом (кошачьи ушки, чулки, ноутбук, хвостик)
+-- Верхний блок с живым маскотом
 local MascotZone = Instance.new("Frame", Sidebar)
 MascotZone.Size = UDim2.new(1, 0, 0, 108)
 MascotZone.BackgroundTransparency = 1
 
 local MascotArt = Instance.new("Frame", MascotZone)
-MascotArt.Size = UDim2.new(0, 112, 0, 96)
+MascotArt.Size = UDim2.new(0, 114, 0, 96)
 MascotArt.Position = UDim2.new(0, 14, 0, 4)
 MascotArt.BackgroundTransparency = 1
 MascotArt.ZIndex = 8
@@ -567,6 +899,22 @@ Laptop.Rotation = -12
 Laptop.BackgroundColor3 = Color3.fromRGB(235, 238, 245)
 Instance.new("UICorner", Laptop).CornerRadius = UDim.new(0, 3)
 
+-- Живая анимация маскота (дыхание, ушки, хвостик, моргание)
+local mascotTick = 0
+Connections.MascotLive = RunService.RenderStepped:Connect(function(dt)
+    if not MasterFrame.Visible or not State.MascotAliveAnim then return end
+    mascotTick = mascotTick + dt * 3.2
+    Tail.Rotation = math.sin(mascotTick * 1.4) * 14
+    EarL.Rotation = 35 + math.sin(mascotTick * 2) * 6
+    EarR.Rotation = -35 - math.cos(mascotTick * 2) * 6
+    HeadCircle.Position = UDim2.new(0, 10, 0, 6 + math.sin(mascotTick) * 1.6)
+    if math.floor(mascotTick * 2) % 19 == 0 then
+        FaceTxt.Text = "- ω -"
+    else
+        FaceTxt.Text = "• ω •"
+    end
+end)
+
 local SidebarTopLine = Instance.new("Frame", Sidebar)
 SidebarTopLine.Size = UDim2.new(1, 0, 0, 1)
 SidebarTopLine.Position = UDim2.new(0, 0, 0, 108)
@@ -584,7 +932,7 @@ local NavLayout = Instance.new("UIListLayout", NavScroll)
 NavLayout.Padding = UDim.new(0, 2)
 NavLayout.SortOrder = Enum.SortOrder.LayoutOrder
 NavLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-    NavScroll.CanvasSize = UDim2.new(0, 0, 0, NavLayout.AbsoluteContentSize.Y + 12)
+    NavScroll.CanvasSize = UDim2.new(0, 0, 0, NavLayout.AbsoluteContentSize.Y + 14)
 end)
 
 -- Нижний профиль пользователя
@@ -623,8 +971,8 @@ ProfileUser.TextXAlignment = Enum.TextXAlignment.Left
 
 -- Верхняя панель с Поиском
 local TopBar = Instance.new("Frame", MainBox)
-TopBar.Size = UDim2.new(1, -145, 0, 36)
-TopBar.Position = UDim2.new(0, 145, 0, 0)
+TopBar.Size = UDim2.new(1, -148, 0, 36)
+TopBar.Position = UDim2.new(0, 148, 0, 0)
 TopBar.BackgroundTransparency = 1
 MakeDraggable(TopBar, MasterFrame)
 MakeDraggable(MascotZone, MasterFrame)
@@ -640,7 +988,7 @@ SearchBox.Size = UDim2.new(1, -45, 1, -6)
 SearchBox.Position = UDim2.new(0, 12, 0, 3)
 SearchBox.BackgroundTransparency = 1
 SearchBox.Text = ""
-SearchBox.PlaceholderText = "Search 85+ features..."
+SearchBox.PlaceholderText = "Search 150+ modules (Aimbot, Silent Aim, Shaders, Packs)..."
 SearchBox.PlaceholderColor3 = Color3.fromRGB(90, 90, 102)
 SearchBox.TextColor3 = Theme.TextWhite
 SearchBox.Font = Enum.Font.Gotham
@@ -660,8 +1008,8 @@ SearchIcon.TextSize = 13
 -- РАБОЧАЯ ОБЛАСТЬ + ФОНОВОЕ СОЗВЕЗДИЕ (PLEXUS CONSTELLATION)
 -------------------------------------------------------------------------
 local ContentArea = Instance.new("Frame", MainBox)
-ContentArea.Size = UDim2.new(1, -145, 1, -36)
-ContentArea.Position = UDim2.new(0, 145, 0, 36)
+ContentArea.Size = UDim2.new(1, -148, 1, -36)
+ContentArea.Position = UDim2.new(0, 148, 0, 36)
 ContentArea.BackgroundTransparency = 1
 ContentArea.ClipsDescendants = true
 
@@ -671,7 +1019,7 @@ PlexusLayer.BackgroundTransparency = 1
 PlexusLayer.ZIndex = 1
 
 local PlexusNodes = {}
-local NUM_PLEXUS = 13
+local NUM_PLEXUS = 15
 for i = 1, NUM_PLEXUS do
     local pDot = Instance.new("Frame", PlexusLayer)
     pDot.Size = UDim2.new(0, 4, 0, 4)
@@ -682,15 +1030,15 @@ for i = 1, NUM_PLEXUS do
     table.insert(AccentObjects, pDot)
     table.insert(PlexusNodes, {
         ui = pDot,
-        x = math.random(25, 435),
-        y = math.random(120, 395),
-        vx = (math.random() - 0.5) * 34,
-        vy = (math.random() - 0.5) * 34
+        x = math.random(25, 440),
+        y = math.random(80, 400),
+        vx = (math.random() - 0.5) * 38,
+        vy = (math.random() - 0.5) * 38
     })
 end
 
 local PlexusLines = {}
-for i = 1, 38 do
+for i = 1, 44 do
     local pLine = Instance.new("Frame", PlexusLayer)
     pLine.AnchorPoint = Vector2.new(0.5, 0.5)
     pLine.BackgroundColor3 = Theme.Accent
@@ -702,12 +1050,12 @@ end
 
 Connections.PlexusAnim = RunService.RenderStepped:Connect(function(dt)
     if not MasterFrame.Visible then return end
-    local maxW, maxH = 450, 410
+    local maxW, maxH = 455, 415
     for _, n in ipairs(PlexusNodes) do
         n.x = n.x + n.vx * dt
         n.y = n.y + n.vy * dt
         if n.x < 15 or n.x > (maxW - 15) then n.vx = -n.vx end
-        if n.y < 95 or n.y > (maxH - 12) then n.vy = -n.vy end
+        if n.y < 65 or n.y > (maxH - 12) then n.vy = -n.vy end
         n.ui.Position = UDim2.new(0, n.x, 0, n.y)
     end
     local idx = 1
@@ -716,13 +1064,13 @@ Connections.PlexusAnim = RunService.RenderStepped:Connect(function(dt)
             local dx = PlexusNodes[j].x - PlexusNodes[i].x
             local dy = PlexusNodes[j].y - PlexusNodes[i].y
             local dist = math.sqrt(dx * dx + dy * dy)
-            if dist < 155 and idx <= #PlexusLines then
+            if dist < 150 and idx <= #PlexusLines then
                 local l = PlexusLines[idx]
                 l.Visible = true
                 l.Position = UDim2.new(0, (PlexusNodes[i].x + PlexusNodes[j].x) / 2, 0, (PlexusNodes[i].y + PlexusNodes[j].y) / 2)
                 l.Size = UDim2.new(0, dist, 0, 1)
                 l.Rotation = math.deg(math.atan2(dy, dx))
-                l.BackgroundTransparency = math.clamp(dist / 155, 0.15, 0.9)
+                l.BackgroundTransparency = math.clamp(dist / 150, 0.15, 0.9)
                 idx = idx + 1
             end
         end
@@ -733,14 +1081,14 @@ Connections.PlexusAnim = RunService.RenderStepped:Connect(function(dt)
 end)
 
 -------------------------------------------------------------------------
--- ПРАВОЕ ОКНО 3D-ПРЕВЬЮ ПЕРСОНАЖА (С ESP И REFRESH NOW)
+-- ПРАВОЕ ОКНО 3D-ПРЕВЬЮ ПЕРСОНАЖА
 -------------------------------------------------------------------------
 local PreviewBox = Instance.new("Frame", MasterFrame)
 PreviewBox.Size = UDim2.new(0, 218, 1, 0)
 PreviewBox.Position = UDim2.new(1, -218, 0, 0)
 PreviewBox.BackgroundColor3 = Theme.BgMain
 PreviewBox.BorderSizePixel = 0
-Instance.new("UICorner", PreviewBox).CornerRadius = UDim.new(0, 4)
+Instance.new("UICorner", PreviewBox).CornerRadius = UDim.new(0, 5)
 Instance.new("UIStroke", PreviewBox).Color = Theme.Border
 
 local PreviewTop = Instance.new("Frame", PreviewBox)
@@ -827,7 +1175,7 @@ Connections.PreviewCamera = RunService.RenderStepped:Connect(function(dt)
 end)
 
 -------------------------------------------------------------------------
--- UI БИЛДЕР (СТРАНИЦЫ, ВЫПАДАЮЩИЕ ПОДВКЛАДКИ, КАРТОЧКИ, ЧЕКБОКСЫ)
+-- UI БИЛДЕР С ПОЛНЫМИ АНИМАЦИЯМИ (СТРАНИЦЫ, КАРТОЧКИ, КОНТРОЛЫ)
 -------------------------------------------------------------------------
 local AllPages = {}
 local ActiveBars = {}
@@ -861,7 +1209,7 @@ local function CreatePage(pageName, isDefault)
 
     local function RecalcCanvas()
         local maxH = math.max(LeftLayout.AbsoluteContentSize.Y, RightLayout.AbsoluteContentSize.Y)
-        Page.CanvasSize = UDim2.new(0, 0, 0, maxH + 32)
+        Page.CanvasSize = UDim2.new(0, 0, 0, maxH + 34)
     end
     LeftLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(RecalcCanvas)
     RightLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(RecalcCanvas)
@@ -874,10 +1222,24 @@ end
 local function SwitchToPage(pageObj, barIndicator, labelObj)
     for _, p in ipairs(AllPages) do p.Page.Visible = false end
     for _, b in ipairs(ActiveBars) do b.Visible = false end
-    for _, l in ipairs(ActiveLabels) do l.TextColor3 = Theme.TextGray end
+    for _, l in ipairs(ActiveLabels) do
+        QuickTween(l, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextColor3 = Theme.TextGray})
+    end
     pageObj.Page.Visible = true
-    if barIndicator then barIndicator.Visible = true end
-    if labelObj then labelObj.TextColor3 = Theme.TextWhite end
+    if State.UITabSlide then
+        pageObj.Left.Position = UDim2.new(0, 10, 0, 26)
+        pageObj.Right.Position = UDim2.new(0.5, 6, 0, 26)
+        QuickTween(pageObj.Left, 0.25, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {Position = UDim2.new(0, 10, 0, 10)})
+        QuickTween(pageObj.Right, 0.28, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {Position = UDim2.new(0.5, 6, 0, 10)})
+    end
+    if barIndicator then
+        barIndicator.Visible = true
+        barIndicator.Size = UDim2.new(0, 2, 0, 2)
+        QuickTween(barIndicator, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {Size = UDim2.new(0, 2, 0, 15)})
+    end
+    if labelObj then
+        QuickTween(labelObj, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {TextColor3 = Theme.TextWhite})
+    end
 end
 
 local function CreateNavCategory(icon, title, subTabsList, defaultPageObj)
@@ -910,6 +1272,8 @@ local function CreateNavCategory(icon, title, subTabsList, defaultPageObj)
     Lbl.TextSize = 11
     Lbl.TextXAlignment = Enum.TextXAlignment.Left
     table.insert(ActiveLabels, Lbl)
+
+    BindInteractiveHover(MainBtn, nil, Lbl, 12)
 
     if subTabsList and #subTabsList > 0 then
         local Chev = Instance.new("TextLabel", MainBtn)
@@ -954,7 +1318,10 @@ local function CreateNavCategory(icon, title, subTabsList, defaultPageObj)
             SubLbl.TextXAlignment = Enum.TextXAlignment.Left
             table.insert(ActiveLabels, SubLbl)
 
+            BindInteractiveHover(SubBtn, nil, SubLbl, 20)
+
             SubBtn.MouseButton1Click:Connect(function()
+                SpawnRipple(SubBtn, UserInputService:GetMouseLocation())
                 SwitchToPage(sub.PageObj, SubBar, SubLbl)
             end)
         end
@@ -963,15 +1330,16 @@ local function CreateNavCategory(icon, title, subTabsList, defaultPageObj)
         MainBtn.MouseButton1Click:Connect(function()
             expanded = not expanded
             Chev.Text = expanded and "^" or "⌄"
-            TweenService:Create(Wrapper, TweenInfo.new(0.18), {
+            QuickTween(Wrapper, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
                 Size = UDim2.new(1, 0, 0, expanded and (30 + #subTabsList * 25) or 30)
-            }):Play()
+            })
             if subTabsList[1] then
-                SwitchToPage(subTabsList[1].PageObj, Bar, Lbl)
+                SwitchToPage(sub.PageObj or subTabsList[1].PageObj, Bar, Lbl)
             end
         end)
     else
         MainBtn.MouseButton1Click:Connect(function()
+            SpawnRipple(MainBtn, UserInputService:GetMouseLocation())
             SwitchToPage(defaultPageObj, Bar, Lbl)
         end)
     end
@@ -985,8 +1353,18 @@ local function CreateCard(pageObj, side, titleText, hasCollapseArrow)
     Card.BackgroundColor3 = Theme.BgCard
     Card.BorderSizePixel = 0
     Card.ClipsDescendants = true
-    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 4)
-    Instance.new("UIStroke", Card).Color = Theme.Border
+    Instance.new("UICorner", Card).CornerRadius = UDim.new(0, 5)
+    local CardStroke = Instance.new("UIStroke", Card)
+    CardStroke.Color = Theme.Border
+
+    Card.MouseEnter:Connect(function()
+        if State.UIHoverGlow then
+            QuickTween(CardStroke, 0.22, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Color3.fromRGB(48, 48, 62)})
+        end
+    end)
+    Card.MouseLeave:Connect(function()
+        QuickTween(CardStroke, 0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Theme.Border})
+    end)
 
     local HeaderBtn = Instance.new("TextButton", Card)
     HeaderBtn.Size = UDim2.new(1, 0, 0, 28)
@@ -1043,9 +1421,9 @@ local function CreateCard(pageObj, side, titleText, hasCollapseArrow)
         HeaderBtn.MouseButton1Click:Connect(function()
             collapsed = not collapsed
             ArrowLbl.Text = collapsed and "⌄" or "^"
-            TweenService:Create(Card, TweenInfo.new(0.18), {
+            QuickTween(Card, 0.22, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
                 Size = UDim2.new(1, 0, 0, collapsed and 28 or (Layout.AbsoluteContentSize.Y + 42))
-            }):Play()
+            })
         end)
     end
 
@@ -1064,7 +1442,8 @@ local function AddCheckbox(cardBody, stateKey, labelText, callback)
     Box.Position = UDim2.new(0, 2, 0.5, -7)
     Box.BackgroundColor3 = State[stateKey] and Theme.Accent or Theme.BgElement
     Instance.new("UICorner", Box).CornerRadius = UDim.new(0, 3)
-    Instance.new("UIStroke", Box).Color = Theme.Border
+    local BoxStroke = Instance.new("UIStroke", Box)
+    BoxStroke.Color = Theme.Border
 
     local Check = Instance.new("TextLabel", Box)
     Check.Size = UDim2.new(1, 0, 1, 0)
@@ -1084,9 +1463,19 @@ local function AddCheckbox(cardBody, stateKey, labelText, callback)
     Lbl.TextSize = 11
     Lbl.TextXAlignment = Enum.TextXAlignment.Left
 
+    BindInteractiveHover(Row, BoxStroke, Lbl, 22)
+
     local function SetVal(newVal, silent)
         State[stateKey] = newVal
-        Box.BackgroundColor3 = newVal and Theme.Accent or Theme.BgElement
+        QuickTween(Box, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
+            BackgroundColor3 = newVal and Theme.Accent or Theme.BgElement
+        })
+        Box.Size = UDim2.new(0, 18, 0, 18)
+        Box.Position = UDim2.new(0, 0, 0.5, -9)
+        QuickTween(Box, 0.22, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {
+            Size = UDim2.new(0, 14, 0, 14),
+            Position = UDim2.new(0, 2, 0.5, -7)
+        })
         Check.Text = newVal and "✓" or ""
         if not silent then
             Notify(labelText, newVal and "Enabled [ON]" or "Disabled [OFF]", 1.6)
@@ -1096,6 +1485,7 @@ local function AddCheckbox(cardBody, stateKey, labelText, callback)
 
     ToggleSetters[stateKey] = SetVal
     Row.MouseButton1Click:Connect(function()
+        SpawnRipple(Row, UserInputService:GetMouseLocation())
         SetVal(not State[stateKey], false)
     end)
 
@@ -1123,7 +1513,8 @@ local function AddSlider(cardBody, stateKey, labelText, minVal, maxVal, callback
     Track.BackgroundColor3 = Theme.BgElement
     Track.Text = ""
     Instance.new("UICorner", Track).CornerRadius = UDim.new(1, 0)
-    Instance.new("UIStroke", Track).Color = Theme.Border
+    local TrackStroke = Instance.new("UIStroke", Track)
+    TrackStroke.Color = Theme.Border
 
     local initPct = math.clamp((State[stateKey] - minVal) / (maxVal - minVal), 0, 1)
     local Fill = Instance.new("Frame", Track)
@@ -1133,12 +1524,14 @@ local function AddSlider(cardBody, stateKey, labelText, minVal, maxVal, callback
     Instance.new("UICorner", Fill).CornerRadius = UDim.new(1, 0)
     table.insert(AccentObjects, Fill)
 
+    BindInteractiveHover(Track, TrackStroke, nil, nil)
+
     local sliding = false
     local function UpdateFromInput(input)
         local relX = math.clamp((input.Position.X - Track.AbsolutePosition.X) / Track.AbsoluteSize.X, 0, 1)
         local val = math.floor(minVal + (maxVal - minVal) * relX)
         State[stateKey] = val
-        Fill.Size = UDim2.new(relX, 0, 1, 0)
+        QuickTween(Fill, 0.1, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {Size = UDim2.new(relX, 0, 1, 0)})
         TopLbl.Text = labelText .. ": " .. tostring(val)
         if callback then task.spawn(function() callback(val) end) end
     end
@@ -1164,18 +1557,29 @@ end
 local function AddButton(cardBody, labelText, callback)
     local Btn = Instance.new("TextButton", cardBody)
     Btn.Name = labelText
-    Btn.Size = UDim2.new(1, 0, 0, 25)
+    Btn.Size = UDim2.new(1, 0, 0, 26)
     Btn.BackgroundColor3 = Theme.BgElement
     Btn.Text = labelText
     Btn.TextColor3 = Theme.TextWhite
     Btn.Font = Enum.Font.GothamBold
     Btn.TextSize = 11
     Instance.new("UICorner", Btn).CornerRadius = UDim.new(0, 4)
-    Instance.new("UIStroke", Btn).Color = Theme.Border
+    local BtnStroke = Instance.new("UIStroke", Btn)
+    BtnStroke.Color = Theme.Border
+
+    Btn.MouseEnter:Connect(function()
+        if State.UIHoverGlow then
+            QuickTween(Btn, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Theme.BgElementHover})
+            QuickTween(BtnStroke, 0.18, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Theme.BorderActive})
+        end
+    end)
+    Btn.MouseLeave:Connect(function()
+        QuickTween(Btn, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {BackgroundColor3 = Theme.BgElement})
+        QuickTween(BtnStroke, 0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {Color = Theme.Border})
+    end)
 
     Btn.MouseButton1Click:Connect(function()
-        Btn.BackgroundColor3 = Color3.fromRGB(32, 32, 44)
-        task.delay(0.12, function() Btn.BackgroundColor3 = Theme.BgElement end)
+        SpawnRipple(Btn, UserInputService:GetMouseLocation())
         task.spawn(callback)
     end)
 
@@ -1190,8 +1594,11 @@ SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
 end)
 
 -------------------------------------------------------------------------
--- СТРУКТУРА ВКЛАДОК И ПОДВКЛАДОК САЙДБАРА
+-- СОЗДАНИЕ ВСЕХ СТРАНИЦ И НАВИГАЦИИ САЙДБАРА
 -------------------------------------------------------------------------
+local PageCombatAim  = CreatePage("CombatAim", false)
+local PageCombatSil  = CreatePage("CombatSilent", false)
+
 local PageVisShaders = CreatePage("VisShaders", false)
 local PageVis3DAuras = CreatePage("Vis3DAuras", false)
 local PageVisTrails  = CreatePage("VisTrails", false)
@@ -1203,7 +1610,12 @@ local PageMiscEmotes = CreatePage("MiscEmotes", false)
 local PageMiscTarget = CreatePage("MiscTarget", false)
 
 local PageColors     = CreatePage("Colors", false)
-local PageSettings   = CreatePage("Settings", true) -- Открыта по умолчанию, как на скриншоте 2
+local PageSettings   = CreatePage("Settings", true)
+
+CreateNavCategory("🎯", "COMBAT", {
+    {Name = "• Camera Aimbot", PageObj = PageCombatAim},
+    {Name = "• Silent Aim & Hitbox", PageObj = PageCombatSil}
+}, nil)
 
 CreateNavCategory("👁", "VISUALS", {
     {Name = "• Shaders & Sky (12)", PageObj = PageVisShaders},
@@ -1215,7 +1627,7 @@ CreateNavCategory("👁", "VISUALS", {
 CreateNavCategory("⚙", "MISC", {
     {Name = "• Movement & Fly", PageObj = PageMiscMove},
     {Name = "• R15 Anim Packs (16)", PageObj = PageMiscPacks},
-    {Name = "• Emotes & Tricks (18)", PageObj = PageMiscEmotes},
+    {Name = "• Emotes & Tricks", PageObj = PageMiscEmotes},
     {Name = "• Desync & Target", PageObj = PageMiscTarget}
 }, nil)
 
@@ -1223,10 +1635,284 @@ CreateNavCategory("🎨", "COLORS", nil, PageColors)
 CreateNavCategory("🔧", "SETTINGS", nil, PageSettings)
 
 -------------------------------------------------------------------------
--- 1. СТРАНИЦА SETTINGS (1:1 КАК НА СКРИНШОТЕ 2: MENU + CONFIGS)
+-- ЯДРО AIMBOT & SILENT AIM (ПОИСК ЦЕЛИ, ПРОВЕРКА СТЕН, НАВЕДЕНИЕ, ХИТБОКСЫ)
 -------------------------------------------------------------------------
-local CardMenu = CreateCard(PageSettings, "Left", "Menu", true)
-local CardConfigs = CreateCard(PageSettings, "Right", "💾  Configs", false)
+local function IsTargetVisible(targetPart, targetChar)
+    if not State.AimbotWallCheck then return true end
+    local myChar = LocalPlayer.Character
+    if not myChar then return false end
+    local params = RaycastParams.new()
+    params.FilterType = Enum.RaycastFilterType.Exclude
+    params.FilterDescendantsInstances = {myChar, Camera}
+    local origin = Camera.CFrame.Position
+    local dir = (targetPart.Position - origin)
+    local result = Workspace:Raycast(origin, dir, params)
+    if not result then return true end
+    return result.Instance:IsDescendantOf(targetChar)
+end
+
+local function GetTargetBone(char)
+    if State.AimbotHitPart == "Head" and char:FindFirstChild("Head") then
+        return char.Head
+    elseif State.AimbotHitPart == "Random" then
+        local list = {"Head", "HumanoidRootPart", "UpperTorso", "LowerTorso"}
+        local pick = list[math.random(1, #list)]
+        return char:FindFirstChild(pick) or char:FindFirstChild("HumanoidRootPart")
+    end
+    return char:FindFirstChild("HumanoidRootPart") or char:FindFirstChild("Head")
+end
+
+local function GetClosestPlayerInFOV()
+    local bestPlr = nil
+    local bestPart = nil
+    local shortestDist = State.AimbotFOV
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character then
+            local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+            local bone = GetTargetBone(plr.Character)
+            local teamOk = (not State.AimbotTeamCheck) or (plr.Team ~= LocalPlayer.Team)
+            local aliveOk = (not State.AimbotAliveCheck) or (hum and hum.Health > 0)
+
+            if bone and teamOk and aliveOk then
+                local screenPos, onScreen = Camera:WorldToViewportPoint(bone.Position)
+                if onScreen then
+                    local dist2D = (Vector2.new(screenPos.X, screenPos.Y) - screenCenter).Magnitude
+                    if dist2D <= shortestDist and IsTargetVisible(bone, plr.Character) then
+                        shortestDist = dist2D
+                        bestPlr = plr
+                        bestPart = bone
+                    end
+                end
+            end
+        end
+    end
+    return bestPlr, bestPart
+end
+
+-- Главный цикл обработки Camera Aimbot, FOV Circle, Snapline, Crosshair и Target HUD
+local crossAngle = 0
+Connections.MasterCombatLoop = RunService.RenderStepped:Connect(function(dt)
+    local screenCenter = Vector2.new(Camera.ViewportSize.X / 2, Camera.ViewportSize.Y / 2)
+
+    -- Обновление круга FOV
+    FOVCircleFrame.Visible = State.ShowFOVCircle
+    if State.ShowFOVCircle then
+        FOVCircleFrame.Position = UDim2.new(0, screenCenter.X, 0, screenCenter.Y)
+        FOVCircleFrame.Size = UDim2.new(0, State.AimbotFOV * 2, 0, State.AimbotFOV * 2)
+        FOVCircleFrame.BackgroundTransparency = State.FilledFOVCircle and 0.86 or 1
+        if State.RainbowFOV then
+            local rCol = Color3.fromHSV((tick() * 0.35) % 1, 0.75, 1)
+            FOVStroke.Color = rCol
+            FOVCircleFrame.BackgroundColor3 = rCol
+        else
+            FOVStroke.Color = Theme.Accent
+            FOVCircleFrame.BackgroundColor3 = Theme.Accent
+        end
+    end
+
+    -- Обновление кастомного прицела
+    CrosshairHolder.Visible = State.CustomCrosshair
+    if State.CustomCrosshair then
+        CrosshairHolder.Position = UDim2.new(0, screenCenter.X, 0, screenCenter.Y)
+        if State.CrosshairSpin then
+            crossAngle = (crossAngle + dt * 130) % 360
+            CrosshairHolder.Rotation = crossAngle
+        else
+            CrosshairHolder.Rotation = 0
+        end
+        for _, cb in ipairs(CrossBars) do
+            cb.ui.Position = UDim2.new(0.5, cb.dirX * State.CrosshairGap, 0.5, cb.dirY * State.CrosshairGap)
+        end
+    end
+
+    -- Поиск ближайшей цели
+    local targetPlr, targetBone = GetClosestPlayerInFOV()
+    CurrentAimbotTarget = targetPlr
+
+    -- Snapline (линия до цели)
+    if State.LockTracerLine and targetBone then
+        local sp, onScr = Camera:WorldToViewportPoint(targetBone.Position)
+        if onScr then
+            local p2 = Vector2.new(sp.X, sp.Y)
+            local diff = p2 - screenCenter
+            AimbotSnapline.Visible = true
+            AimbotSnapline.Position = UDim2.new(0, (screenCenter.X + p2.X) / 2, 0, (screenCenter.Y + p2.Y) / 2)
+            AimbotSnapline.Size = UDim2.new(0, diff.Magnitude, 0, 1.5)
+            AimbotSnapline.Rotation = math.deg(math.atan2(diff.Y, diff.X))
+        else
+            AimbotSnapline.Visible = false
+        end
+    else
+        AimbotSnapline.Visible = false
+    end
+
+    -- Обновление Target HUD
+    TargetHUD.Visible = (State.TargetHUDPanel and targetPlr ~= nil)
+    if State.TargetHUDPanel and targetPlr and targetPlr.Character then
+        local hum = targetPlr.Character:FindFirstChildOfClass("Humanoid")
+        local hrp = targetPlr.Character:FindFirstChild("HumanoidRootPart")
+        local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+        local dist = (hrp and myHrp) and math.floor((hrp.Position - myHrp.Position).Magnitude) or 0
+        local hp = hum and math.floor(hum.Health) or 0
+        local maxHp = (hum and hum.MaxHealth > 0) and hum.MaxHealth or 100
+
+        THUDName.Text = "🎯 " .. targetPlr.DisplayName .. " (@" .. targetPlr.Name .. ")"
+        THUDInfo.Text = string.format("HP: %d/%d | Dist: %dm", hp, math.floor(maxHp), dist)
+        THUDAvatar.Image = "rbxthumb://type=AvatarHeadShot&id=" .. targetPlr.UserId .. "&w=150&h=150"
+        QuickTween(THUDHpFill, 0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out, {
+            Size = UDim2.new(math.clamp(hp / maxHp, 0, 1), 0, 1, 0)
+        })
+    end
+
+    -- Доводка камеры (Camera Aimbot)
+    if State.AimbotEnabled and targetBone then
+        local holdOk = (not State.AimbotHoldMouse2) or UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2)
+        if holdOk then
+            local aimPos = targetBone.Position
+            if State.AimbotPrediction and targetBone.Parent:FindFirstChild("HumanoidRootPart") then
+                local vel = targetBone.Parent.HumanoidRootPart.Velocity
+                aimPos = aimPos + (vel * (State.AimbotPredictVal / 100))
+            end
+            local goalCF = CFrame.new(Camera.CFrame.Position, aimPos)
+            local alpha = math.clamp(1 / math.max(State.AimbotSmoothness / 5, 1), 0.04, 1)
+            Camera.CFrame = Camera.CFrame:Lerp(goalCF, alpha)
+        end
+    end
+end)
+
+-- Цикл Silent Aim & Hitbox Expander (Расширение хитбоксов + перенаправление выстрелов)
+Connections.SilentAndHitboxLoop = RunService.RenderStepped:Connect(function()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = plr.Character.HumanoidRootPart
+            local isEnemy = (not State.AimbotTeamCheck) or (plr.Team ~= LocalPlayer.Team)
+
+            if State.HitboxExpander and isEnemy then
+                hrp.Size = Vector3.new(State.HitboxSize, State.HitboxSize, State.HitboxSize)
+                hrp.Transparency = State.HitboxTransparency / 100
+                hrp.Color = Theme.Accent
+                hrp.Material = Enum.Material.Neon
+                hrp.CanCollide = false
+            elseif State.SilentAimEnabled and plr == CurrentAimbotTarget and isEnemy then
+                if math.random(1, 100) <= State.SilentAimHitChance then
+                    hrp.Size = Vector3.new(15, 15, 15)
+                    hrp.Transparency = 0.92
+                    hrp.CanCollide = false
+                end
+            else
+                if hrp.Size.X > 3 then
+                    hrp.Size = Vector3.new(2, 2, 1)
+                    hrp.Transparency = 1
+                end
+            end
+        end
+    end
+end)
+
+-- Silent Aim Bullet Redirect при клике мыши / тапе по экрану
+UserInputService.InputBegan:Connect(function(inp, gpe)
+    if gpe then return end
+    if (inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch) then
+        if State.SilentAimEnabled and CurrentAimbotTarget and CurrentAimbotTarget.Character then
+            if math.random(1, 100) <= State.SilentAimHitChance then
+                local bone = GetTargetBone(CurrentAimbotTarget.Character)
+                if bone and State.SilentAimBulletTP then
+                    local oldCF = Camera.CFrame
+                    Camera.CFrame = CFrame.new(oldCF.Position, bone.Position)
+                    task.delay(0.03, function()
+                        Camera.CFrame = oldCF
+                    end)
+                end
+            end
+        end
+    end
+end)
+
+-------------------------------------------------------------------------
+-- ЗАПОЛНЕНИЕ ВКЛАДКИ COMBAT -> CAMERA AIMBOT & SILENT AIM
+-------------------------------------------------------------------------
+local CardAimMain   = CreateCard(PageCombatAim, "Left", "🎯 Camera Aimbot Core", true)
+local CardAimFOV    = CreateCard(PageCombatAim, "Right", "⭕ FOV Circle & Overlays", true)
+
+AddCheckbox(CardAimMain, "AimbotEnabled", "Enable Camera Aimbot (Авто-наводка)", function() end)
+AddCheckbox(CardAimMain, "AimbotHoldMouse2", "Hold Right Click (ПКМ) Only", function() end)
+AddSlider(CardAimMain, "AimbotSmoothness", "Aimbot Smoothness (Плавность)", 5, 100)
+AddCheckbox(CardAimMain, "AimbotPrediction", "Velocity Prediction (Упреждение)", function() end)
+AddSlider(CardAimMain, "AimbotPredictVal", "Prediction Strength (%)", 4, 45)
+AddCheckbox(CardAimMain, "AimbotWallCheck", "Visible / Wall Check (Проверка стен)", function() end)
+AddCheckbox(CardAimMain, "AimbotTeamCheck", "Team Check (Не наводить на своих)", function() end)
+AddCheckbox(CardAimMain, "AimbotAliveCheck", "Alive Check (Только живые)", function() end)
+
+AddButton(CardAimMain, "🎯 HitPart: Head (Голова)", function()
+    State.AimbotHitPart = "Head"
+    Notify("Aimbot Bone", "Target bone set to: Head", 1.5)
+end)
+AddButton(CardAimMain, "🛡 HitPart: HumanoidRootPart (Тело)", function()
+    State.AimbotHitPart = "HumanoidRootPart"
+    Notify("Aimbot Bone", "Target bone set to: Torso", 1.5)
+end)
+AddButton(CardAimMain, "🎲 HitPart: Randomize (Случайно)", function()
+    State.AimbotHitPart = "Random"
+    Notify("Aimbot Bone", "Target bone set to: Random", 1.5)
+end)
+
+-- Правая карточка Aimbot: Круг FOV и боевые панели
+AddCheckbox(CardAimFOV, "ShowFOVCircle", "Draw 2D FOV Circle (Круг радиуса)", function() end)
+AddSlider(CardAimFOV, "AimbotFOV", "FOV Circle Radius (px)", 35, 340)
+AddCheckbox(CardAimFOV, "RainbowFOV", "Rainbow Animated FOV Circle", function() end)
+AddCheckbox(CardAimFOV, "FilledFOVCircle", "Filled Translucent FOV Circle", function() end)
+AddCheckbox(CardAimFOV, "LockTracerLine", "Target Snapline (Линия захвата)", function() end)
+AddCheckbox(CardAimFOV, "TargetHUDPanel", "Target HUD Card (Инфо о враге)", function() end)
+AddCheckbox(CardAimFOV, "CustomCrosshair", "Neon Spinning Crosshair (Прицел)", function() end)
+AddCheckbox(CardAimFOV, "CrosshairSpin", "Rotate Crosshair 360°", function() end)
+AddSlider(CardAimFOV, "CrosshairGap", "Crosshair Gap Size", 4, 24)
+
+-- Вторая подвкладка Combat: SILENT AIM & HITBOX EXPANDER
+local CardSilent = CreateCard(PageCombatSil, "Left", "👻 Silent Aim & Bullet Redirect", true)
+local CardHitbox = CreateCard(PageCombatSil, "Right", "📦 Hitbox Expander & TriggerBot", true)
+
+AddCheckbox(CardSilent, "SilentAimEnabled", "Enable Silent Aim (Сайлент Аим)", function() end)
+AddSlider(CardSilent, "SilentAimHitChance", "Silent Aim Hit Chance (%)", 15, 100)
+AddCheckbox(CardSilent, "SilentAimFOVCheck", "Use FOV Radius for Silent Aim", function() end)
+AddCheckbox(CardSilent, "SilentAimBulletTP", "Instant Camera Flick Redirect", function() end)
+
+AddCheckbox(CardHitbox, "HitboxExpander", "Enable Hitbox Expander (Хитбоксы)", function() end)
+AddSlider(CardHitbox, "HitboxSize", "Hitbox Cube Size (Studs)", 4, 32)
+AddSlider(CardHitbox, "HitboxTransparency", "Hitbox Transparency (%)", 10, 95)
+
+AddCheckbox(CardHitbox, "TriggerBot", "Auto TriggerBot (Авто-атака при наведении)", function(state)
+    Disconnect("TriggerBot")
+    if state then
+        Connections.TriggerBot = RunService.RenderStepped:Connect(function()
+            local t = Mouse.Target
+            if t and t.Parent then
+                local plr = Players:GetPlayerFromCharacter(t.Parent) or Players:GetPlayerFromCharacter(t.Parent.Parent)
+                if plr and plr ~= LocalPlayer then
+                    local teamOk = (not State.AimbotTeamCheck) or (plr.Team ~= LocalPlayer.Team)
+                    if teamOk then
+                        pcall(function()
+                            if mouse1click then
+                                mouse1click()
+                            else
+                                VirtualInputManager:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, true, game, 1)
+                                task.wait(0.02)
+                                VirtualInputManager:SendMouseButtonEvent(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2, 0, false, game, 1)
+                            end
+                        end)
+                    end
+                end
+            end
+        end)
+    end
+end)
+
+-------------------------------------------------------------------------
+-- 1. СТРАНИЦА SETTINGS (АНИМАЦИИ МЕНЮ, БИНДЫ, КОНФИГИ)
+-------------------------------------------------------------------------
+local CardMenu = CreateCard(PageSettings, "Left", "✨ Menu & UI Animations", true)
+local CardConfigs = CreateCard(PageSettings, "Right", "💾 Config Manager", false)
 
 local KbRow = Instance.new("Frame", CardMenu)
 KbRow.Size = UDim2.new(1, 0, 0, 24)
@@ -1278,15 +1964,16 @@ UserInputService.InputBegan:Connect(function(input, gpe)
         return
     end
     if not gpe and input.KeyCode == MenuKeybind then
-        MasterFrame.Visible = not MasterFrame.Visible
+        ToggleMenuAnimated()
     end
 end)
 
 MobileToggle.MouseButton1Click:Connect(function()
-    MasterFrame.Visible = not MasterFrame.Visible
+    SpawnRipple(MobileToggle, UserInputService:GetMouseLocation())
+    ToggleMenuAnimated()
 end)
 
-AddCheckbox(CardMenu, "Watermark", "Watermark", function(val)
+AddCheckbox(CardMenu, "Watermark", "Show Top Watermark", function(val)
     Watermark.Visible = val
 end)
 
@@ -1294,16 +1981,26 @@ AddCheckbox(CardMenu, "PreviewESP", "3D Preview ESP Name", function(val)
     PreviewESPLabel.Visible = val
 end)
 
-AddCheckbox(CardMenu, "Notifications", "Toast Notifications", function() end)
+AddCheckbox(CardMenu, "Notifications", "Animated Toast Notifications", function() end)
+AddCheckbox(CardMenu, "UIRippleFX", "UI Ripple Click Waves (Волна клика)", function() end)
+AddCheckbox(CardMenu, "UIHoverGlow", "UI Hover Glow & Text Slide", function() end)
+AddCheckbox(CardMenu, "UITabSlide", "UI Smooth Tab Slide Transition", function() end)
+AddCheckbox(CardMenu, "MascotAliveAnim", "Live Animated Sidebar Mascot", function() end)
 
-AddButton(CardMenu, "🎬  Replay Intro Animation", function()
+AddCheckbox(CardMenu, "KeystrokesHUD", "WASD Keystrokes HUD (Нажатия клавиш)", function(val)
+    KeystrokesFrame.Visible = val
+end)
+
+AddButton(CardMenu, "🎬 Replay Compact Intro Window", function()
     MasterFrame.Visible = false
-    RunCinematicIntro(function()
+    RunCompactCinematicIntro(function()
         MasterFrame.Visible = true
+        MasterScale.Scale = 0.88
+        QuickTween(MasterScale, 0.28, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {Scale = 1})
     end)
 end)
 
-AddButton(CardMenu, "🗑  Unload", function()
+AddButton(CardMenu, "🗑 Unload FemboyHub V7", function()
     for k, _ in pairs(Connections) do Disconnect(k) end
     for k, _ in pairs(VisualObjects) do ClearVisual(k) end
     ScreenGui:Destroy()
@@ -1311,7 +2008,7 @@ end)
 
 -- ПРАВАЯ КАРТОЧКА: CONFIGS
 local CfgListBox = Instance.new("ScrollingFrame", CardConfigs)
-CfgListBox.Size = UDim2.new(1, 0, 0, 96)
+CfgListBox.Size = UDim2.new(1, 0, 0, 105)
 CfgListBox.BackgroundColor3 = Color3.fromRGB(9, 9, 12)
 CfgListBox.ScrollBarThickness = 2
 CfgListBox.CanvasSize = UDim2.new(0, 0, 0, 0)
@@ -1396,7 +2093,7 @@ local cfgActions = {
         for k, v in pairs(State) do snap[k] = v end
         SavedConfigs[name] = snap
         pcall(function()
-            if writefile then writefile("FemboyHub_" .. name .. ".json", HttpService:JSONEncode(snap)) end
+            if writefile then writefile("FemboyHubV7_" .. name .. ".json", HttpService:JSONEncode(snap)) end
         end)
         RebuildConfigList(name)
         CfgStatus.Text = "Saved " .. name
@@ -1406,8 +2103,8 @@ local cfgActions = {
         local name = CfgNameBox.Text ~= "" and CfgNameBox.Text or "IDK"
         local data = SavedConfigs[name]
         pcall(function()
-            if readfile and isfile and isfile("FemboyHub_" .. name .. ".json") then
-                data = HttpService:JSONDecode(readfile("FemboyHub_" .. name .. ".json"))
+            if readfile and isfile and isfile("FemboyHubV7_" .. name .. ".json") then
+                data = HttpService:JSONDecode(readfile("FemboyHubV7_" .. name .. ".json"))
             end
         end)
         if data then
@@ -1456,14 +2153,17 @@ for _, act in ipairs(cfgActions) do
     b.TextSize = 11
     Instance.new("UICorner", b).CornerRadius = UDim.new(0, 4)
     Instance.new("UIStroke", b).Color = Theme.Border
-    b.MouseButton1Click:Connect(act.fn)
+    b.MouseButton1Click:Connect(function()
+        SpawnRipple(b, UserInputService:GetMouseLocation())
+        act.fn()
+    end)
 end
 
 -------------------------------------------------------------------------
 -- 2. VISUALS -> SHADERS & SKY (12 пресетов ЦК, RTX Шейдеры, Motion Blur)
 -------------------------------------------------------------------------
 local CardShaders = CreateCard(PageVisShaders, "Left", "RTX Shaders & Camera FX", true)
-local CardCC      = CreateCard(PageVisShaders, "Right", "Color Correction Presets (10)", true)
+local CardCC      = CreateCard(PageVisShaders, "Right", "Color Correction Presets (12)", true)
 
 local function ClearLightingFX()
     for _, v in ipairs(Lighting:GetChildren()) do
@@ -1581,6 +2281,12 @@ end)
 AddButton(CardCC, "📼 VHS Dreamcore Haze", function()
     ApplyCCPreset("Dreamcore Haze", 19.5, Color3.fromRGB(85, 60, 110), Color3.fromRGB(240, 185, 255), 0.15, 0.55)
 end)
+AddButton(CardCC, "🔮 Abyssal Void Indigo", function()
+    ApplyCCPreset("Abyssal Void", 0, Color3.fromRGB(6, 4, 24), Color3.fromRGB(145, 130, 255), 0.42, 0.35)
+end)
+AddButton(CardCC, "☢️ Toxic Wasteland Amber", function()
+    ApplyCCPreset("Toxic Amber", 6.5, Color3.fromRGB(45, 55, 12), Color3.fromRGB(220, 255, 135), 0.32, 0.28)
+end)
 AddButton(CardCC, "🔄 Reset Lighting to Default", function()
     ClearLightingFX()
     for k, v in pairs(DefaultLighting) do Lighting[k] = v end
@@ -1588,12 +2294,11 @@ AddButton(CardCC, "🔄 Reset Lighting to Default", function()
 end)
 
 -------------------------------------------------------------------------
--- 3. VISUALS -> 3D AURAS & GEAR (Пентаграмма, Мечи, Кибер-Кольцо, Молнии)
+-- 3. VISUALS -> 3D AURAS & GEAR (Пентаграмма, ДНК-Спираль, Чёрная Дыра, Мечи)
 -------------------------------------------------------------------------
 local Card3DGear  = CreateCard(PageVis3DAuras, "Left", "3D Gear, Swords & Magic Seals", true)
-local Card3DAuras = CreateCard(PageVis3DAuras, "Right", "3D Auras, Wings & Orbits", true)
+local Card3DAuras = CreateCard(PageVis3DAuras, "Right", "3D Auras, DNA Helix & Orbits", true)
 
--- Вращающаяся неоновая печать/пентаграмма под ногами
 AddCheckbox(Card3DGear, "MagicCircle", "Rotating Magic Seal (Печать под ногами)", function(state)
     Disconnect("MagicCircle")
     ClearVisual("MagicCircle")
@@ -1621,7 +2326,6 @@ AddCheckbox(Card3DGear, "MagicCircle", "Rotating Magic Seal (Печать под
             local att = Instance.new("Attachment", p)
             starNodes[i] = {part = p, att = att}
         end
-        -- Соединяем вершины по звезде (1->3->5->2->4->1)
         for i = 1, pts do
             local nextIdx = ((i + 1) % pts) + 1
             local beam = Instance.new("Beam", folder)
@@ -1649,7 +2353,6 @@ AddCheckbox(Card3DGear, "MagicCircle", "Rotating Magic Seal (Печать под
     end
 end)
 
--- Парящие неоновые мечи за спиной
 AddCheckbox(Card3DGear, "FloatingSwords", "Floating Neon Swords (4 Меча за спиной)", function(state)
     Disconnect("FloatingSwords")
     ClearVisual("FloatingSwords")
@@ -1682,7 +2385,6 @@ AddCheckbox(Card3DGear, "FloatingSwords", "Floating Neon Swords (4 Меча за
     end
 end)
 
--- Кибернетическое кольцо Архонта за спиной
 AddCheckbox(Card3DGear, "CyberRing", "Cyber Archon Back Ring (Кольцо за спиной)", function(state)
     Disconnect("CyberRing")
     ClearVisual("CyberRing")
@@ -1709,6 +2411,37 @@ AddCheckbox(Card3DGear, "CyberRing", "Cyber Archon Back Ring (Кольцо за 
                     local a = angle + (i * math.pi * 2 / count)
                     local localOffset = CFrame.new(math.cos(a) * 2.6, math.sin(a) * 2.6 + 0.5, 1.4)
                     seg.CFrame = hrp.CFrame * localOffset * CFrame.Angles(0, 0, a)
+                end
+            end
+        end)
+    end
+end)
+
+AddCheckbox(Card3DGear, "RunicPillars", "Orbiting Runic Pillars (Рунические колонны)", function(state)
+    Disconnect("RunicPillars")
+    ClearVisual("RunicPillars")
+    if state then
+        local folder = Instance.new("Folder", Workspace)
+        VisualObjects.RunicPillars = folder
+        local pillars = {}
+        for i = 1, 4 do
+            local p = Instance.new("Part", folder)
+            p.Size = Vector3.new(0.35, 4.2, 0.35)
+            p.Material = Enum.Material.Neon
+            p.Color = Theme.Accent
+            p.Transparency = 0.2
+            p.Anchored = true
+            p.CanCollide = false
+            pillars[i] = p
+        end
+        local rot = 0
+        Connections.RunicPillars = RunService.RenderStepped:Connect(function(dt)
+            rot = rot + dt * 1.2
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                for i, p in ipairs(pillars) do
+                    local a = rot + (i * math.pi / 2)
+                    p.CFrame = CFrame.new(hrp.Position + Vector3.new(math.cos(a) * 5.2, math.sin(rot * 2 + i) * 0.5, math.sin(a) * 5.2))
                 end
             end
         end)
@@ -1759,7 +2492,78 @@ AddCheckbox(Card3DGear, "Halo", "Floating Neon Halo (Нимб)", function(state)
     end
 end)
 
--- 3D Ауры справа
+-- ПРАВАЯ КОЛОНКА 3D АУР
+AddCheckbox(Card3DAuras, "DNAHelixAura", "3D Double DNA Helix (Двойная спираль ДНК)", function(state)
+    Disconnect("DNAHelix")
+    ClearVisual("DNAHelix")
+    if state then
+        local folder = Instance.new("Folder", Workspace)
+        VisualObjects.DNAHelix = folder
+        local strands = {}
+        for i = 1, 16 do
+            local s1 = Instance.new("Part", folder)
+            s1.Shape = Enum.PartType.Ball
+            s1.Size = Vector3.new(0.28, 0.28, 0.28)
+            s1.Material = Enum.Material.Neon
+            s1.Color = Theme.Accent
+            s1.Anchored = true
+            s1.CanCollide = false
+
+            local s2 = s1:Clone()
+            s2.Parent = folder
+            strands[i] = {a = s1, b = s2}
+        end
+        local t = 0
+        Connections.DNAHelix = RunService.RenderStepped:Connect(function(dt)
+            t = t + dt * 3
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                for i, pair in ipairs(strands) do
+                    local yOff = -3.0 + (i * 0.38)
+                    local ang = t + (i * 0.45)
+                    pair.a.Position = hrp.Position + Vector3.new(math.cos(ang) * 2.5, yOff, math.sin(ang) * 2.5)
+                    pair.b.Position = hrp.Position + Vector3.new(math.cos(ang + math.pi) * 2.5, yOff, math.sin(ang + math.pi) * 2.5)
+                end
+            end
+        end)
+    end
+end)
+
+AddCheckbox(Card3DAuras, "BlackholeCore", "Blackhole Singularity Orb (Чёрная дыра)", function(state)
+    Disconnect("Blackhole")
+    ClearVisual("Blackhole")
+    if state then
+        local folder = Instance.new("Folder", Workspace)
+        VisualObjects.Blackhole = folder
+        local core = Instance.new("Part", folder)
+        core.Shape = Enum.PartType.Ball
+        core.Size = Vector3.new(1.8, 1.8, 1.8)
+        core.Material = Enum.Material.SmoothPlastic
+        core.Color = Color3.fromRGB(5, 5, 8)
+        core.Anchored = true
+        core.CanCollide = false
+
+        local ring = Instance.new("Part", folder)
+        ring.Size = Vector3.new(4.2, 0.08, 4.2)
+        ring.Material = Enum.Material.Neon
+        ring.Color = Theme.Accent
+        ring.Anchored = true
+        ring.CanCollide = false
+        Instance.new("CylinderMesh", ring)
+
+        local t = 0
+        Connections.Blackhole = RunService.RenderStepped:Connect(function(dt)
+            t = t + dt * 2.2
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                local pos = hrp.Position + Vector3.new(0, 4.8 + math.sin(t) * 0.3, 0)
+                core.Position = pos
+                ring.CFrame = CFrame.new(pos) * CFrame.Angles(math.rad(25), t, math.rad(15))
+            end
+        end)
+    end
+end)
+
 AddCheckbox(Card3DAuras, "Constellations3D", "3D Constellations (Созвездия вокруг)", function(state)
     Disconnect("Constellations")
     ClearVisual("Constellations")
@@ -1835,7 +2639,6 @@ AddCheckbox(Card3DAuras, "AngelWings", "Animated 3D Angel Wings (Крылья)",
     end
 end)
 
--- Электрические разряды молний вокруг игрока
 AddCheckbox(Card3DAuras, "TeslaLightning", "Tesla Lightning Aura (Разряды молний)", function(state)
     Disconnect("Tesla")
     ClearVisual("Tesla")
@@ -1920,7 +2723,7 @@ AddCheckbox(Card3DAuras, "PointLightGlow", "Character Neon PointLight (Свеч�
 end)
 
 -------------------------------------------------------------------------
--- 4. VISUALS -> TRAILS & WEATHER (Шлейфы, Шаги, Погода)
+-- 4. VISUALS -> TRAILS & WEATHER (Шлейфы, Шаги, Погода + Звездопад)
 -------------------------------------------------------------------------
 local CardTrails  = CreateCard(PageVisTrails, "Left", "Trails, Footsteps & Clones", true)
 local CardWeather = CreateCard(PageVisTrails, "Right", "World Weather & Particles", true)
@@ -2011,7 +2814,6 @@ AddCheckbox(CardTrails, "FireFootsteps", "Neon Flame Footsteps (Следы ша�
     end)
 end)
 
--- Погодные эффекты
 local function SpawnWeatherEmitter(connName, visName, state, col1, col2, speedRange, sizeVal)
     Disconnect(connName)
     ClearVisual(visName)
@@ -2053,10 +2855,14 @@ AddCheckbox(CardWeather, "VoidAsh", "Floating Void Ash (Пепел Бездны)
     SpawnWeatherEmitter("VoidAsh", "AshCloud", state, Color3.fromRGB(220, 220, 235), Color3.fromRGB(90, 90, 110), NumberRange.new(3, 6), 0.24)
 end)
 
+AddCheckbox(CardWeather, "StarfallWeather", "Cosmic Shooting Stars (Звездопад)", function(state)
+    SpawnWeatherEmitter("Starfall", "StarCloud", state, Color3.fromRGB(255, 245, 160), Color3.fromRGB(130, 210, 255), NumberRange.new(32, 48), 0.42)
+end)
+
 -------------------------------------------------------------------------
--- 5. VISUALS -> ESP & FAKE ITEMS (Chams, Tracers, Korblox, Headless)
+-- 5. VISUALS -> ESP & FAKE ITEMS (2D Box, HeadDot, Look Laser, Damage Popups)
 -------------------------------------------------------------------------
-local CardESP  = CreateCard(PageVisESP, "Left", "Player ESP, Tags & Tracers", true)
+local CardESP  = CreateCard(PageVisESP, "Left", "Player ESP, 2D Boxes & Lasers", true)
 local CardFake = CreateCard(PageVisESP, "Right", "Fake Items & Body Chams", true)
 
 AddCheckbox(CardESP, "HighlightESP", "Highlight Chams ESP", function(state)
@@ -2126,7 +2932,121 @@ AddCheckbox(CardESP, "NameESP", "Name, Distance & HP Tags", function(state)
     end
 end)
 
--- 3D Beam Tracers от вашего персонажа ко всем игрокам
+-- 2D Box ESP + Health Bar через BillboardGui на HumanoidRootPart
+AddCheckbox(CardESP, "Box2DESP", "2D Box & HealthBar ESP (Боксы)", function(state)
+    if not state then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Character.HumanoidRootPart:FindFirstChild("FH_Box2D") then
+                plr.Character.HumanoidRootPart.FH_Box2D:Destroy()
+            end
+        end
+    else
+        task.spawn(function()
+            while State.Box2DESP do
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                        local hrp = plr.Character.HumanoidRootPart
+                        local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+                        local bGui = hrp:FindFirstChild("FH_Box2D")
+                        if not bGui then
+                            bGui = Instance.new("BillboardGui", hrp)
+                            bGui.Name = "FH_Box2D"
+                            bGui.Size = UDim2.new(4.4, 0, 5.8, 0)
+                            bGui.AlwaysOnTop = true
+
+                            local boxFrame = Instance.new("Frame", bGui)
+                            boxFrame.Size = UDim2.new(1, -8, 1, 0)
+                            boxFrame.Position = UDim2.new(0, 8, 0, 0)
+                            boxFrame.BackgroundTransparency = 0.88
+                            boxFrame.BackgroundColor3 = Theme.Accent
+                            local st = Instance.new("UIStroke", boxFrame)
+                            st.Color = Theme.Accent
+                            st.Thickness = 1.4
+
+                            local hpBg = Instance.new("Frame", bGui)
+                            hpBg.Name = "HpBg"
+                            hpBg.Size = UDim2.new(0, 4, 1, 0)
+                            hpBg.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+                            hpBg.BorderSizePixel = 0
+
+                            local hpFill = Instance.new("Frame", hpBg)
+                            hpFill.Name = "Fill"
+                            hpFill.Size = UDim2.new(1, 0, 1, 0)
+                            hpFill.AnchorPoint = Vector2.new(0, 1)
+                            hpFill.Position = UDim2.new(0, 0, 1, 0)
+                            hpFill.BackgroundColor3 = Color3.fromRGB(90, 255, 130)
+                            hpFill.BorderSizePixel = 0
+                        end
+                        if hum and bGui:FindFirstChild("HpBg") then
+                            local pct = math.clamp(hum.Health / math.max(hum.MaxHealth, 1), 0, 1)
+                            bGui.HpBg.Fill.Size = UDim2.new(1, 0, pct, 0)
+                        end
+                    end
+                end
+                task.wait(0.25)
+            end
+        end)
+    end
+end)
+
+AddCheckbox(CardESP, "HeadDotESP", "Neon Head Dot ESP (Точка на голове)", function(state)
+    if not state then
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Character and plr.Character:FindFirstChild("Head") and plr.Character.Head:FindFirstChild("FH_HeadDot") then
+                plr.Character.Head.FH_HeadDot:Destroy()
+            end
+        end
+    else
+        task.spawn(function()
+            while State.HeadDotESP do
+                for _, plr in ipairs(Players:GetPlayers()) do
+                    if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                        local head = plr.Character.Head
+                        if not head:FindFirstChild("FH_HeadDot") then
+                            local bg = Instance.new("BillboardGui", head)
+                            bg.Name = "FH_HeadDot"
+                            bg.Size = UDim2.new(0, 10, 0, 10)
+                            bg.AlwaysOnTop = true
+                            local dot = Instance.new("Frame", bg)
+                            dot.Size = UDim2.new(1, 0, 1, 0)
+                            dot.BackgroundColor3 = Theme.Accent
+                            Instance.new("UICorner", dot).CornerRadius = UDim.new(1, 0)
+                            Instance.new("UIStroke", dot).Color = Color3.fromRGB(0, 0, 0)
+                        end
+                    end
+                end
+                task.wait(0.8)
+            end
+        end)
+    end
+end)
+
+-- Лазер направления взгляда врагов
+AddCheckbox(CardESP, "LookLaserESP", "Enemy Look Direction Laser (Куда смотрят)", function(state)
+    Disconnect("LookLasers")
+    ClearVisual("LookLaserFolder")
+    if state then
+        local folder = Instance.new("Folder", Workspace)
+        VisualObjects.LookLaserFolder = folder
+        Connections.LookLasers = RunService.RenderStepped:Connect(function()
+            folder:ClearAllChildren()
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                    local head = plr.Character.Head
+                    local laser = Instance.new("Part", folder)
+                    laser.Size = Vector3.new(0.08, 0.08, 12)
+                    laser.Material = Enum.Material.Neon
+                    laser.Color = Theme.Accent
+                    laser.Transparency = 0.25
+                    laser.Anchored = true
+                    laser.CanCollide = false
+                    laser.CFrame = head.CFrame * CFrame.new(0, 0, -6)
+                end
+            end
+        end)
+    end
+end)
+
 AddCheckbox(CardESP, "TracersESP", "3D Beam Tracers to Players", function(state)
     Disconnect("Tracers")
     ClearVisual("TracersFolder")
@@ -2152,6 +3072,49 @@ AddCheckbox(CardESP, "TracersESP", "3D Beam Tracers to Players", function(state)
                     beam.LightEmission = 1
                     beam.FaceCamera = true
                     beam.Color = ColorSequence.new(Theme.Accent)
+                end
+            end
+        end)
+    end
+end)
+
+-- Всплывающие индикаторы урона (Floating 3D Damage Popups)
+AddCheckbox(CardESP, "DamagePopupESP", "3D Floating Damage Popups (Цифры урона)", function(state)
+    Disconnect("DamagePopups")
+    if state then
+        local lastHpMap = {}
+        Connections.DamagePopups = RunService.Heartbeat:Connect(function()
+            for _, plr in ipairs(Players:GetPlayers()) do
+                if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("Head") then
+                    local hum = plr.Character:FindFirstChildOfClass("Humanoid")
+                    if hum then
+                        local prev = lastHpMap[plr] or hum.Health
+                        if hum.Health < prev then
+                            local dmg = math.floor(prev - hum.Health)
+                            local p = Instance.new("Part", Workspace)
+                            p.Size = Vector3.new(0.2, 0.2, 0.2)
+                            p.Position = plr.Character.Head.Position + Vector3.new(math.random(-2, 2), 1.5, math.random(-2, 2))
+                            p.Transparency = 1
+                            p.Anchored = true
+                            p.CanCollide = false
+                            local bg = Instance.new("BillboardGui", p)
+                            bg.Size = UDim2.new(0, 80, 0, 30)
+                            bg.AlwaysOnTop = true
+                            local txt = Instance.new("TextLabel", bg)
+                            txt.Size = UDim2.new(1, 0, 1, 0)
+                            txt.BackgroundTransparency = 1
+                            txt.Text = "-" .. tostring(dmg) .. " HP"
+                            txt.TextColor3 = Color3.fromRGB(255, 75, 95)
+                            txt.TextStrokeTransparency = 0
+                            txt.Font = Enum.Font.GothamBold
+                            txt.TextSize = 15
+                            QuickTween(p, 0.85, Enum.EasingStyle.Quart, Enum.EasingDirection.Out, {
+                                Position = p.Position + Vector3.new(0, 4.5, 0)
+                            })
+                            Debris:AddItem(p, 0.85)
+                        end
+                        lastHpMap[plr] = hum.Health
+                    end
                 end
             end
         end)
@@ -2217,7 +3180,7 @@ AddCheckbox(CardFake, "GhostBody", "Semi-Transparent Ghost Body", function(state
 end)
 
 -------------------------------------------------------------------------
--- 6. MISC -> MOVEMENT & FLY (Все функции движения + новые фишки)
+-- 6. MISC -> MOVEMENT & FLY
 -------------------------------------------------------------------------
 local CardMoveLeft  = CreateCard(PageMiscMove, "Left", "Fly, Noclip & Parkour", true)
 local CardMoveRight = CreateCard(PageMiscMove, "Right", "Speed, Spinbot & Camera", true)
@@ -2306,7 +3269,6 @@ AddCheckbox(CardMoveLeft, "Wallhop", "Wallhop (Отскок от стен)", fun
     end
 end)
 
--- Хождение по воздуху на неоновой платформе
 AddCheckbox(CardMoveLeft, "AirWalk", "Air Walk Platform (Ходить по воздуху)", function(state)
     Disconnect("AirWalk")
     ClearVisual("AirWalkPart")
@@ -2327,7 +3289,6 @@ AddCheckbox(CardMoveLeft, "AirWalk", "Air Walk Platform (Ходить по во�
     end
 end)
 
--- Лазание по вертикальным стенам (Spider Climb)
 AddCheckbox(CardMoveLeft, "SpiderClimb", "Spider Wall Climb (Лазать по стенам)", function(state)
     Disconnect("SpiderClimb")
     if state then
@@ -2357,7 +3318,6 @@ AddCheckbox(CardMoveLeft, "InfiniteJump", "Infinite Jump", function(state)
     end
 end)
 
--- Правая колонка движения
 AddCheckbox(CardMoveRight, "WalkSpeedOn", "Enable WalkSpeed", function(state)
     Disconnect("WalkSpeed")
     local hum = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
@@ -2431,7 +3391,7 @@ AddCheckbox(CardMoveRight, "CustomFOVOn", "Custom FOV (110°)", function(state)
 end)
 
 -------------------------------------------------------------------------
--- 7. MISC -> R15 ANIM PACKS (16 полных паков анимации походки)
+-- 7. MISC -> R15 ANIM PACKS (16 паков анимации походки)
 -------------------------------------------------------------------------
 local CardPacks1 = CreateCard(PageMiscPacks, "Left", "R15 Animation Packs (1 - 8)", true)
 local CardPacks2 = CreateCard(PageMiscPacks, "Right", "R15 Animation Packs (9 - 16)", true)
@@ -2471,7 +3431,7 @@ AddButton(CardPacks2, "🕹️ Pack: Oldschool (Олдскул)", function() Set
 AddButton(CardPacks2, "🫧 Pack: Bubbly (Воздушный)", function() SetAnimPack("Bubbly", 910004836, 910034870, 910025107, 910016857, 910001910) end)
 
 -------------------------------------------------------------------------
--- 8. MISC -> EMOTES & TRICKS (Танцы, Эмоции, Сальто назад, Трюки)
+-- 8. MISC -> EMOTES & TRICKS (Танцы, Эмоции, Сальто, Модификаторы)
 -------------------------------------------------------------------------
 local CardEmotes = CreateCard(PageMiscEmotes, "Left", "Dances & Emotes Player", true)
 local CardTricks = CreateCard(PageMiscEmotes, "Right", "Procedural Tricks & Modifiers", true)
@@ -2509,7 +3469,6 @@ AddButton(CardEmotes, "⏹️ Stop Current Emote", function()
     Notify("Emote Player", "Stopped emote", 1.4)
 end)
 
--- Процедурное Сальто Назад (360° Backflip)
 AddButton(CardTricks, "🤸 Do 360° Backflip (Сальто назад)", function()
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2525,7 +3484,6 @@ AddButton(CardTricks, "🤸 Do 360° Backflip (Сальто назад)", functi
     end
 end)
 
--- Процедурное Сальто Вперёд (Frontflip)
 AddButton(CardTricks, "⚡ Do 360° Frontflip (Сальто вперёд)", function()
     local char = LocalPlayer.Character
     local hrp = char and char:FindFirstChild("HumanoidRootPart")
@@ -2547,6 +3505,22 @@ AddCheckbox(CardTricks, "MatrixLean", "Matrix Dodge Lean (Наклон Матр�
     local rootJoint = (lowerTorso and lowerTorso:FindFirstChild("Root")) or (char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("RootJoint"))
     if rootJoint then
         rootJoint.C0 = state and (rootJoint.C0 * CFrame.Angles(math.rad(-42), 0, 0)) or CFrame.new(0, 0, 0)
+    end
+end)
+
+AddCheckbox(CardTricks, "HelicopterTilt", "Helicopter Horizontal Spin", function(state)
+    Disconnect("HeliSpin")
+    local char = LocalPlayer.Character
+    local lowerTorso = char and char:FindFirstChild("LowerTorso")
+    local rootJoint = (lowerTorso and lowerTorso:FindFirstChild("Root")) or (char and char:FindFirstChild("HumanoidRootPart") and char.HumanoidRootPart:FindFirstChild("RootJoint"))
+    if state and rootJoint then
+        local a = 0
+        Connections.HeliSpin = RunService.RenderStepped:Connect(function(dt)
+            a = a + dt * 18
+            rootJoint.C0 = CFrame.Angles(math.rad(85), 0, a)
+        end)
+    elseif rootJoint then
+        rootJoint.C0 = CFrame.new(0, 0, 0)
     end
 end)
 
@@ -2582,9 +3556,9 @@ AddCheckbox(CardTricks, "FreezePose", "Freeze Current Pose (Застыть)", fu
 end)
 
 -------------------------------------------------------------------------
--- 9. MISC -> DESYNC & TARGET (Десинки со скриншота 1 + Target система)
+-- 9. MISC -> DESYNC & TARGET (Десинки, Защита + Target система)
 -------------------------------------------------------------------------
-local CardDesync = CreateCard(PageMiscTarget, "Left", "Desync & Anti-Aim", true)
+local CardDesync = CreateCard(PageMiscTarget, "Left", "Desync & Anti-Aim Protection", true)
 local CardTarget = CreateCard(PageMiscTarget, "Right", "Target Player Actions", true)
 
 AddCheckbox(CardDesync, "FakePos", "Fake Position Hologram", function(state)
@@ -2632,6 +3606,18 @@ AddCheckbox(CardDesync, "AntiFling", "Anti-Fling Protection", function(state)
     end
 end)
 
+AddCheckbox(CardDesync, "AntiVoid", "Anti-Void Bounce (Защита от падения в бездну)", function(state)
+    Disconnect("AntiVoid")
+    if state then
+        Connections.AntiVoid = RunService.Heartbeat:Connect(function()
+            local hrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if hrp and hrp.Position.Y < -55 then
+                hrp.Velocity = Vector3.new(hrp.Velocity.X, 145, hrp.Velocity.Z)
+            end
+        end)
+    end
+end)
+
 local SelectedPlr = nil
 AddButton(CardTarget, "⚡ Teleport to Selected Target", function()
     local myHrp = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
@@ -2662,11 +3648,12 @@ for _, plr in ipairs(Players:GetPlayers()) do
 end
 
 -------------------------------------------------------------------------
--- 10. ВКЛАДКА COLORS (Смена акцента меню, созвездий и 3D-эффектов)
+-- 10. ВКЛАДКА COLORS (Смена акцента меню, созвездий и Радужный режим UI)
 -------------------------------------------------------------------------
 local CardColors = CreateCard(PageColors, "Left", "UI & Constellation Accent Color", true)
 
 local function ApplyThemeColor(col, name)
+    Disconnect("RainbowUI")
     Theme.Accent = col
     for _, obj in ipairs(AccentObjects) do
         obj.BackgroundColor3 = col
@@ -2674,21 +3661,34 @@ local function ApplyThemeColor(col, name)
     Notify("Theme Color", "Accent set to " .. name, 1.5)
 end
 
-AddButton(CardColors, "⚪ Pure White (1:1 Screenshot)", function() ApplyThemeColor(Color3.fromRGB(255, 255, 255), "Pure White") end)
+AddButton(CardColors, "⚪ Pure White (1:1 Pitch-Black)", function() ApplyThemeColor(Color3.fromRGB(255, 255, 255), "Pure White") end)
 AddButton(CardColors, "🌸 Pastel Femboy Pink", function() ApplyThemeColor(Color3.fromRGB(255, 145, 215), "Pastel Pink") end)
 AddButton(CardColors, "💎 Shitaro Ice Blue", function() ApplyThemeColor(Color3.fromRGB(95, 175, 255), "Ice Blue") end)
 AddButton(CardColors, "💜 Cyberpunk Violet", function() ApplyThemeColor(Color3.fromRGB(185, 115, 255), "Cyberpunk Violet") end)
 AddButton(CardColors, "🩸 Crimson Red", function() ApplyThemeColor(Color3.fromRGB(255, 75, 95), "Crimson Red") end)
 AddButton(CardColors, "💚 Matrix Emerald", function() ApplyThemeColor(Color3.fromRGB(80, 255, 140), "Matrix Emerald") end)
+AddButton(CardColors, "🌈 Rainbow Chroma UI (Динамическая радуга)", function()
+    Disconnect("RainbowUI")
+    Connections.RainbowUI = RunService.RenderStepped:Connect(function()
+        local c = Color3.fromHSV((tick() * 0.25) % 1, 0.7, 1)
+        Theme.Accent = c
+        for _, obj in ipairs(AccentObjects) do
+            obj.BackgroundColor3 = c
+        end
+    end)
+    Notify("Theme Color", "Rainbow Chroma UI enabled!", 1.6)
+end)
 
 -------------------------------------------------------------------------
--- ЗАПУСК КИНЕМАТОГРАФИЧНОГО ИНТРО И ОТКРЫТИЕ МЕНЮ
+-- ЗАПУСК КОМПАКТНОГО ИНТРО И ОТКРЫТИЕ МЕНЮ С АНИМАЦИЕЙ МАСШТАБА
 -------------------------------------------------------------------------
 task.spawn(function()
-    RunCinematicIntro(function()
+    RunCompactCinematicIntro(function()
         Watermark.Visible = State.Watermark
         MobileToggle.Visible = true
         MasterFrame.Visible = true
-        Notify("FemboyHub V6", "Successfully loaded 85+ modules!", 3)
+        MasterScale.Scale = 0.88
+        QuickTween(MasterScale, 0.32, Enum.EasingStyle.Back, Enum.EasingDirection.Out, {Scale = 1})
+        Notify("FemboyHub V7", "Loaded 150+ modules & Aimbot Engine!", 3)
     end)
 end)
